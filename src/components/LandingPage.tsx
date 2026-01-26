@@ -226,7 +226,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
       {/* Footer */}
       <footer className="relative border-t border-slate-800 py-8 px-6">
         <div className="max-w-7xl mx-auto text-center text-slate-500">
-          <p>© 2024 Urban Liveability Analytics Platform. Powered by AI & Machine Learning.</p>
+          <p>© 2026 Myrm</p>
         </div>
       </footer>
 
