@@ -2,6 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, LineChart, Line } from 'recharts';
 import { TrendingUp, Award, AlertTriangle, Download } from 'lucide-react';
 import { UrbanData } from '../App';
+import urbanixLogo from '../assets/urbanix.png';
+
 
 type LiveabilityDashboardProps = {
   data: UrbanData | null;
@@ -34,6 +36,7 @@ export function LiveabilityDashboard({ data }: LiveabilityDashboardProps) {
     return Math.round(score);
   };
 
+
   const enrichedData = useMemo(() => {
     if (!data) return [];
     return data.districts.map((d) => ({
@@ -45,6 +48,10 @@ export function LiveabilityDashboard({ data }: LiveabilityDashboardProps) {
   const rankedDistricts = useMemo(() => {
     return [...enrichedData].sort((a, b) => b.liveabilityScore - a.liveabilityScore);
   }, [enrichedData]);
+
+  const avg =
+  enrichedData.reduce((sum, d) => sum + d.liveabilityScore, 0) / enrichedData.length;
+
 
   const selectedDistrictData = useMemo(() => {
     if (!selectedDistrict) return null;
@@ -81,35 +88,158 @@ export function LiveabilityDashboard({ data }: LiveabilityDashboardProps) {
     });
   }, [enrichedData, data]);
 
-  const downloadReport = () => {
-    const report = {
-      generatedAt: new Date().toISOString(),
-      summary: {
-        totalDistricts: enrichedData.length,
-        averageLiveability:
-          enrichedData.reduce((sum, d) => sum + d.liveabilityScore, 0) / enrichedData.length,
-        topDistrict: rankedDistricts[0]?.district,
-        bottomDistrict: rankedDistricts[rankedDistricts.length - 1]?.district,
-      },
-      rankings: rankedDistricts,
-    };
+  const safeAvg = (nums: number[]) =>
+  nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : 0;
 
-    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+const getLeader = (rows: any[], key: string, mode: 'max' | 'min' = 'max') => {
+  if (!rows.length) return null;
+  const sorted = [...rows].sort((a, b) => (mode === 'max' ? b[key] - a[key] : a[key] - b[key]));
+  return sorted[0];
+};
+
+const buildHtmlReport = () => {
+  const districts = enrichedData;
+  const rankings = rankedDistricts;
+
+  const avgLiveability = safeAvg(districts.map(d => d.liveabilityScore));
+  const top = rankings[0];
+  const bottom = rankings[rankings.length - 1];
+  const generatedAt = new Date().toLocaleString();
+
+  const bestAir = getLeader(districts, 'airQuality', 'max');
+  const bestMob = getLeader(districts, 'mobilityEfficiency', 'max');
+  const bestGreen = getLeader(districts, 'greenSpaceAccess', 'max');
+  const bestHealth = getLeader(districts, 'healthScore', 'max');
+
+  const rowsHtml = rankings.map(
+    (d, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${d.district}</td>
+        <td><b>${d.liveabilityScore}</b></td>
+        <td>${d.airQuality}</td>
+        <td>${d.mobilityEfficiency}</td>
+        <td>${d.greenSpaceAccess}</td>
+        <td>${d.healthScore}</td>
+        <td>${Number(d.populationDensity).toLocaleString()}</td>
+      </tr>`
+  ).join('');
+
+  return `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>URBANIX — Liveability Report</title>
+
+<style>
+body {
+  margin:0; padding:28px;
+  font-family:system-ui,Segoe UI,Roboto,Arial;
+  background:#0b0f1a;
+  color:#e5e7eb;
+}
+.topbar{display:flex;gap:16px;align-items:center;margin-bottom:24px}
+.logo{height:40px}
+h1{
+  margin:0;font-size:22px;
+  background:linear-gradient(90deg,#a855f7,#ec4899);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.muted{color:#9aa4d3;font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:24px 0}
+.card{
+  background:#12172a;
+  border:1px solid #262c4d;
+  border-radius:14px;
+  padding:14px
+}
+.k{font-size:12px;color:#9aa4d3}
+.v{font-size:20px;font-weight:700}
+.pill{
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:999px;
+  background:rgba(168,85,247,.25);
+  font-size:12px;
+  margin-bottom:6px
+}
+.note{color:#9aa4d3;font-size:13px;line-height:1.6;margin-bottom:18px}
+table{width:100%;border-collapse:collapse;background:#161c35;border-radius:12px;overflow:hidden}
+th,td{padding:10px;font-size:13px;border-bottom:1px solid #262c4d}
+th{background:rgba(168,85,247,.2);color:#e5e7eb}
+td{color:#9aa4d3}
+td b{color:#e5e7eb}
+</style>
+</head>
+
+<body>
+  <div class="topbar">
+    <img src="urbanix.png" class="logo" />
+    <div>
+      <h1>Liveability Analytics Report</h1>
+      <div class="muted">Generated: ${generatedAt}</div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card"><div class="k">Districts</div><div class="v">${districts.length}</div></div>
+    <div class="card"><div class="k">Avg Liveability</div><div class="v">${avgLiveability.toFixed(1)}</div></div>
+    <div class="card"><div class="k">Top District</div><div class="v">${top?.district ?? '-'}</div></div>
+    <div class="card"><div class="k">Needs Attention</div><div class="v">${bottom?.district ?? '-'}</div></div>
+  </div>
+
+  <div class="note">
+    <span class="pill">Indicator leaders</span>
+    <ul>
+      <li>Air: ${bestAir?.district ?? '-'}</li>
+      <li>Mobility: ${bestMob?.district ?? '-'}</li>
+      <li>Green: ${bestGreen?.district ?? '-'}</li>
+      <li>Health: ${bestHealth?.district ?? '-'}</li>
+    </ul>
+  </div>
+
+  <div class="note">
+    <span class="pill">Rankings</span>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>District</th><th>Score</th>
+          <th>Air</th><th>Mobility</th><th>Green</th><th>Health</th><th>Density</th>
+        </tr>
+      </thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+  </div>
+
+  <p class="note">Tip: Print → Save as PDF</p>
+</body>
+</html>`;
+};
+
+
+  const downloadReport = () => {
+    const html = buildHtmlReport();
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
+
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'liveability_report.json';
+    a.download = `URBANIX_Liveability_Report_${new Date().toISOString().slice(0, 10)}.html`;
     a.click();
+
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
 
-  if (!data || data.districts.length === 0) {
-    return (
-      <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 p-12 text-center">
-        <AlertTriangle className="size-12 text-amber-400 mx-auto mb-4" />
-        <p className="text-slate-400">No data available. Please import data first.</p>
-      </div>
-    );
-  }
+
+    if (!data || data.districts.length === 0) {
+      return (
+        <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 p-12 text-center">
+          <AlertTriangle className="size-12 text-amber-400 mx-auto mb-4" />
+          <p className="text-slate-400">No data available. Please import data first.</p>
+        </div>
+      );
+    }
 
   return (
     <div className="space-y-6">
