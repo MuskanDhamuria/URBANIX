@@ -60,23 +60,33 @@ export function RiskMapping({ data }: RiskMappingProps) {
   }, [data]);
   
 
-  const sortedByRisk = useMemo(() => {
-    return [...enrichedData].sort((a, b) => b.riskScore - a.riskScore);
+    const sortedByRisk = useMemo(() => {
+      return [...enrichedData].sort((a, b) => b.riskScore - a.riskScore);
+    }, [enrichedData]);
+
+    const maxRiskScore = useMemo(() => {
+    if (!enrichedData.length) return 1000;
+    const maxVal = Math.max(...enrichedData.map(d => d.riskScore || 0));
+    return Math.max(1000, Math.ceil(maxVal / 100) * 100); // at least 1000, round up to 100s
   }, [enrichedData]);
 
+
   const getRiskColor = (score: number) => {
-    if (score >= 70) return '#ef4444';
-    if (score >= 50) return '#f59e0b';
-    if (score >= 30) return '#fbbf24';
-    return '#10b981';
+    const s = maxRiskScore || 1000;
+    if (score >= 0.7 * s) return '#ef4444';  // Critical
+    if (score >= 0.5 * s) return '#f59e0b';  // High
+    if (score >= 0.3 * s) return '#fbbf24';  // Moderate
+    return '#10b981';                        // Low
   };
 
   const getRiskLevel = (score: number) => {
-    if (score >= 70) return 'Critical';
-    if (score >= 50) return 'High';
-    if (score >= 30) return 'Moderate';
+    const s = maxRiskScore || 1000;
+    if (score >= 0.7 * s) return 'Critical';
+    if (score >= 0.5 * s) return 'High';
+    if (score >= 0.3 * s) return 'Moderate';
     return 'Low';
   };
+
 
   const hotspots = useMemo(() => {
     return enrichedData.filter((d) => d.riskScore >= 60);
@@ -163,10 +173,11 @@ export function RiskMapping({ data }: RiskMappingProps) {
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
             <XAxis dataKey="district" angle={-45} textAnchor="end" height={120} stroke="#94a3b8" />
             <YAxis domain={[0, 100]} stroke="#94a3b8" />
+            
             <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '0.5rem' }} />
             <Legend />
             {selectedRiskLayer === 'composite' && (
-              <Bar dataKey="riskScore" name="Composite Risk Score">
+              <Bar dataKey="riskScore" name="Composite Risk Score"  fill="#ef4444">
                 {sortedByRisk.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={getRiskColor(entry.riskScore)} />
                 ))}
@@ -188,20 +199,56 @@ export function RiskMapping({ data }: RiskMappingProps) {
       <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 p-6">
         <h3 className="text-white mb-4">Vulnerability Assessment (Risk × Population Exposure)</h3>
         <ResponsiveContainer width="100%" height={400}>
-          <ScatterChart>
+          <ScatterChart margin={{bottom: 30 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-            <XAxis type="number" dataKey="riskScore" name="Risk Score" domain={[0, 100]} stroke="#94a3b8" label={{ value: 'Environmental Risk Score', position: 'insideBottom', offset: -5, fill: '#94a3b8' }} />
-            <YAxis type="number" dataKey="populationDensity" name="Population Density" stroke="#94a3b8" label={{ value: 'Population Density', angle: -90, position: 'insideLeft', fill: '#94a3b8' }} />
-            <ZAxis type="number" dataKey="vulnerability" range={[100, 1000]} name="Vulnerability" />
-            <Tooltip cursor={{ strokeDasharray: '3 3' }} contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '0.5rem' }} />
-            <Legend />
-            <Scatter name="Districts" data={enrichedData} fill="#8b5cf6">
+
+            <XAxis
+              type="number"
+              dataKey="riskScore"
+              domain={[0, maxRiskScore]}
+              stroke="#94a3b8"
+              label={{
+                value: 'Environmental Risk Score (0 - 1000)',
+                position: 'insideBottom',
+                offset: -25,
+                fill: '#94a3b8',
+              }}
+            />
+
+            <YAxis
+              type="number"
+              dataKey="populationDensity"
+              stroke="#94a3b8"
+              label={{
+                value: 'Population Density',
+                angle: -90,
+                position: 'insideLeft',
+                fill: '#94a3b8',
+              }}
+            />
+
+            <ZAxis type="number" dataKey="vulnerability" range={[20, 180]} />
+
+            <Tooltip
+              cursor={{ strokeDasharray: '3 3' }}
+              contentStyle={{
+                backgroundColor: '#1e293b',
+                border: '1px solid #334155',
+                borderRadius: '0.5rem',
+              }}
+            />
+
+            <Legend verticalAlign="top" align="right" iconType="circle" 
+            />
+
+            <Scatter name="Districts" data={enrichedData} fill="#ef4444">
               {enrichedData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={getRiskColor(entry.riskScore)} />
+                <Cell key={index} fill={getRiskColor(entry.riskScore)} />
               ))}
             </Scatter>
           </ScatterChart>
         </ResponsiveContainer>
+
         <p className="text-slate-400 mt-4 text-center">
           Bubble size represents vulnerability score (risk exposure × population density)
         </p>
@@ -217,7 +264,7 @@ export function RiskMapping({ data }: RiskMappingProps) {
             {hotspots.map((district) => (
               <div key={district.district} className="border-l-4 p-4 bg-slate-900/50 backdrop-blur-xl rounded border border-slate-700/50" style={{ borderLeftColor: getRiskColor(district.riskScore) }}>
                 <div className="flex justify-between items-start mb-2">
-                  <h4 className="text-white">{district.district}</h4>
+                  <h4 className="text-">{district.district}</h4>
                   <span className={`px-2 py-1 text-xs rounded ${district.riskScore >= 70 ? 'bg-red-500/20 text-red-300 border border-red-500/30' : 'bg-orange-500/20 text-orange-300 border border-orange-500/30'}`}>
                     {getRiskLevel(district.riskScore)}
                   </span>

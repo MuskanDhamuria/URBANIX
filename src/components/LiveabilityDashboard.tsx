@@ -120,9 +120,21 @@ const getLeader = (rows: any[], key: string, mode: 'max' | 'min' = 'max') => {
   return sorted[0];
 };
 
+
+const groupBy = <T, K extends string | number>(arr: T[], keyFn: (x: T) => K) => {
+  const m = new Map<K, T[]>();
+  for (const item of arr) {
+    const k = keyFn(item);
+    if (!m.has(k)) m.set(k, []);
+    m.get(k)!.push(item);
+  }
+  return m;
+};
+
 const buildHtmlReport = () => {
-  const districts = enrichedData;
-  const rankings = rankedDistricts;
+  // IMPORTANT: use aggregatedDistricts (latest year per district)
+  const districts = aggregatedDistricts; // <-- FIX: unique districts only
+  const rankings = districts;            // already sorted desc
 
   const avgLiveability = safeAvg(districts.map(d => d.liveabilityScore));
   const top = rankings[0];
@@ -134,6 +146,26 @@ const buildHtmlReport = () => {
   const bestGreen = getLeader(districts, 'greenSpaceAccess', 'max');
   const bestHealth = getLeader(districts, 'healthScore', 'max');
 
+  // ---- REAL temporal trend (avg liveability per year) ----
+  // This uses ALL rows (enrichedData) but averages by year.
+  const byYear = groupBy(enrichedData, (d) => d.year);
+  const temporal = Array.from(byYear.entries())
+    .sort((a, b) => Number(a[0]) - Number(b[0]))
+    .map(([year, rows]) => ({
+      year,
+      avgLiveability: safeAvg(rows.map(r => r.liveabilityScore))
+    }));
+
+  // ---- Data for charts (latest year per district) ----
+  const labels = districts.map(d => d.district);
+
+  const liveabilitySeries = districts.map(d => d.liveabilityScore);
+  const airSeries = districts.map(d => d.airQuality);
+  const mobilitySeries = districts.map(d => d.mobilityEfficiency);
+  const greenSeries = districts.map(d => d.greenSpaceAccess);
+  const healthSeries = districts.map(d => d.healthScore);
+
+  // Table rows
   const rowsHtml = rankings.map(
     (d, i) => `
       <tr>
@@ -148,51 +180,51 @@ const buildHtmlReport = () => {
       </tr>`
   ).join('');
 
+  // Pass datasets into report JS safely
+  const payload = {
+    labels,
+    liveabilitySeries,
+    airSeries,
+    mobilitySeries,
+    greenSeries,
+    healthSeries,
+    temporalYears: temporal.map(t => t.year),
+    temporalAvg: temporal.map(t => t.avgLiveability),
+  };
+
   return `<!doctype html>
 <html>
 <head>
 <meta charset="utf-8" />
 <title>URBANIX — Liveability Report</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 
 <style>
-body {
-  margin:0; padding:28px;
-  font-family:system-ui,Segoe UI,Roboto,Arial;
-  background:#0b0f1a;
-  color:#e5e7eb;
-}
-.topbar{display:flex;gap:16px;align-items:center;margin-bottom:24px}
-.logo{height:40px}
-h1{
-  margin:0;font-size:22px;
-  background:linear-gradient(90deg,#a855f7,#ec4899);
-  -webkit-background-clip:text;
-  -webkit-text-fill-color:transparent;
-}
-.muted{color:#9aa4d3;font-size:13px}
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:24px 0}
-.card{
-  background:#12172a;
-  border:1px solid #262c4d;
-  border-radius:14px;
-  padding:14px
-}
-.k{font-size:12px;color:#9aa4d3}
-.v{font-size:20px;font-weight:700}
-.pill{
-  display:inline-block;
-  padding:4px 10px;
-  border-radius:999px;
-  background:rgba(168,85,247,.25);
-  font-size:12px;
-  margin-bottom:6px
-}
-.note{color:#9aa4d3;font-size:13px;line-height:1.6;margin-bottom:18px}
-table{width:100%;border-collapse:collapse;background:#161c35;border-radius:12px;overflow:hidden}
-th,td{padding:10px;font-size:13px;border-bottom:1px solid #262c4d}
-th{background:rgba(168,85,247,.2);color:#e5e7eb}
-td{color:#9aa4d3}
-td b{color:#e5e7eb}
+  body { margin:0; padding:28px; font-family:system-ui,Segoe UI,Roboto,Arial; background:#0b0f1a; color:#e5e7eb; }
+  .topbar{display:flex;gap:16px;align-items:center;margin-bottom:24px}
+  .logo{height:40px}
+  h1{ margin:0;font-size:22px; background:linear-gradient(90deg,#a855f7,#ec4899); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .muted{color:#9aa4d3;font-size:13px}
+  .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:24px 0}
+  .card{ background:#12172a; border:1px solid #262c4d; border-radius:14px; padding:14px }
+  .k{font-size:12px;color:#9aa4d3}
+  .v{font-size:20px;font-weight:700}
+  .pill{ display:inline-block; padding:4px 10px; border-radius:999px; background:rgba(168,85,247,.25); font-size:12px; margin:6px 0 10px }
+  .note{color:#9aa4d3;font-size:13px;line-height:1.6;margin-bottom:18px}
+  .section{ margin: 18px 0 28px; }
+  table{width:100%;border-collapse:collapse;background:#161c35;border-radius:12px;overflow:hidden}
+  th,td{padding:10px;font-size:13px;border-bottom:1px solid #262c4d}
+  th{background:rgba(168,85,247,.2);color:#e5e7eb}
+  td{color:#9aa4d3}
+  td b{color:#e5e7eb}
+  .chartCard{
+    background:#12172a; border:1px solid #262c4d; border-radius:14px; padding:14px;
+    margin-top: 12px;
+  }
+  canvas{ width:100% !important; height:340px !important; }
+  @media (max-width: 980px){
+    .grid{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+  }
 </style>
 </head>
 
@@ -206,13 +238,13 @@ td b{color:#e5e7eb}
   </div>
 
   <div class="grid">
-    <div class="card"><div class="k">Districts</div><div class="v">${districts.length}</div></div>
+    <div class="card"><div class="k">Districts Analyzed (Latest Year)</div><div class="v">${districts.length}</div></div>
     <div class="card"><div class="k">Avg Liveability</div><div class="v">${avgLiveability.toFixed(1)}</div></div>
     <div class="card"><div class="k">Top District</div><div class="v">${top?.district ?? '-'}</div></div>
     <div class="card"><div class="k">Needs Attention</div><div class="v">${bottom?.district ?? '-'}</div></div>
   </div>
 
-  <div class="note">
+  <div class="section note">
     <span class="pill">Indicator leaders</span>
     <ul>
       <li>Air: ${bestAir?.district ?? '-'}</li>
@@ -222,8 +254,27 @@ td b{color:#e5e7eb}
     </ul>
   </div>
 
-  <div class="note">
-    <span class="pill">Rankings</span>
+  <div class="section">
+    <div class="pill">Charts</div>
+
+    <div class="chartCard">
+      <div class="note"><b>District Rankings</b> (Composite Liveability Score)</div>
+      <canvas id="chartLiveability"></canvas>
+    </div>
+
+    <div class="chartCard">
+      <div class="note"><b>Component Indicators Comparison</b></div>
+      <canvas id="chartComponents"></canvas>
+    </div>
+
+    <div class="chartCard">
+      <div class="note"><b>Temporal Liveability Trend</b> (Average by Year)</div>
+      <canvas id="chartTrend"></canvas>
+    </div>
+  </div>
+
+  <div class="section note">
+    <span class="pill">Rankings (Latest Year)</span>
     <table>
       <thead>
         <tr>
@@ -236,6 +287,71 @@ td b{color:#e5e7eb}
   </div>
 
   <p class="note">Tip: Print → Save as PDF</p>
+
+  <!-- Chart.js (needs internet). If you want offline charts, tell me and I’ll give you the PNG embed version. -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <script>
+    const payload = ${JSON.stringify(payload)};
+
+    // Liveability bar chart
+    new Chart(document.getElementById('chartLiveability'), {
+      type: 'bar',
+      data: {
+        labels: payload.labels,
+        datasets: [{
+          label: 'Liveability Score',
+          data: payload.liveabilitySeries
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: true } },
+        scales: {
+          x: { ticks: { maxRotation: 45, minRotation: 45 } }
+        }
+      }
+    });
+
+    // Component indicators (grouped bars)
+    new Chart(document.getElementById('chartComponents'), {
+      type: 'bar',
+      data: {
+        labels: payload.labels,
+        datasets: [
+          { label: 'Air Quality', data: payload.airSeries },
+          { label: 'Mobility', data: payload.mobilitySeries },
+          { label: 'Green Space', data: payload.greenSeries },
+          { label: 'Health Score', data: payload.healthSeries }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: true } },
+        scales: {
+          x: { stacked: false, ticks: { maxRotation: 45, minRotation: 45 } },
+          y: { stacked: false }
+        }
+      }
+    });
+
+    // Trend line chart (avg by year)
+    new Chart(document.getElementById('chartTrend'), {
+      type: 'line',
+      data: {
+        labels: payload.temporalYears,
+        datasets: [{
+          label: 'Average Liveability',
+          data: payload.temporalAvg,
+          tension: 0.25
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: true } }
+      }
+    });
+  </script>
 </body>
 </html>`;
 };
