@@ -41,9 +41,32 @@ export function LiveabilityDashboard({ data }: LiveabilityDashboardProps) {
     if (!data) return [];
     return data.districts.map((d) => ({
       ...d,
+      airQuality: Number(d.airQuality),
+      mobilityEfficiency: Number(d.mobilityEfficiency),
+      greenSpaceAccess: Number(d.greenSpaceAccess),
+      healthScore: Number(d.healthScore),
+      populationDensity: Number(d.populationDensity),
       liveabilityScore: calculateLiveabilityScore(d),
     }));
   }, [data]);
+
+
+  // Aggregate by district to avoid duplicate bars (latest year)
+  const aggregatedDistricts = useMemo(() => {
+    if (!enrichedData) return [];
+
+    const map = new Map<string, any>();
+    enrichedData.forEach((d) => {
+      // Keep only the latest year for each district
+      if (!map.has(d.district) || d.year > map.get(d.district).year) {
+        map.set(d.district, d);
+      }
+    });
+
+    // Convert map to array and sort by liveability score descending
+    return Array.from(map.values()).sort((a, b) => b.liveabilityScore - a.liveabilityScore);
+  }, [enrichedData]);
+
 
   const rankedDistricts = useMemo(() => {
     return [...enrichedData].sort((a, b) => b.liveabilityScore - a.liveabilityScore);
@@ -283,7 +306,7 @@ td b{color:#e5e7eb}
           <div className="absolute top-0 right-0 w-32 h-32 bg-purple-400/20 rounded-full blur-3xl" />
           <TrendingUp className="size-8 mb-3 text-purple-400 relative z-10" />
           <p className="text-purple-200 mb-1 relative z-10">Districts Analyzed</p>
-          <p className="text-3xl relative z-10">{enrichedData.length}</p>
+          <p className="text-3xl relative z-10">{aggregatedDistricts.length}</p>
         </div>
         <div className="relative overflow-hidden bg-gradient-to-br from-orange-500/20 to-orange-600/20 border border-orange-500/30 backdrop-blur-xl text-white rounded-2xl p-6 shadow-2xl">
           <div className="absolute top-0 right-0 w-32 h-32 bg-orange-400/20 rounded-full blur-3xl" />
@@ -302,7 +325,7 @@ td b{color:#e5e7eb}
       <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 p-6">
         <h3 className="text-white mb-4">District Rankings by Composite Liveability Score</h3>
         <ResponsiveContainer width="100%" height={400}>
-          <BarChart data={rankedDistricts}>
+          <BarChart data={aggregatedDistricts}>
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
             <XAxis dataKey="district" angle={-45} textAnchor="end" height={120} stroke="#94a3b8" />
             <YAxis domain={[0, 100]} stroke="#94a3b8" />
@@ -317,7 +340,7 @@ td b{color:#e5e7eb}
       <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 p-6">
         <h3 className="text-white mb-4">Component Indicators Comparison</h3>
         <ResponsiveContainer width="100%" height={400}>
-          <BarChart data={enrichedData}>
+          <BarChart data={aggregatedDistricts}>
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
             <XAxis dataKey="district" angle={-45} textAnchor="end" height={120} stroke="#94a3b8" />
             <YAxis domain={[0, 100]} stroke="#94a3b8" />
@@ -364,12 +387,13 @@ td b{color:#e5e7eb}
           className="w-full md:w-auto px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-slate-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
         >
           <option value="">Select a district...</option>
-          {enrichedData.map((d) => (
-            <option key={d.district} value={d.district}>
-              {d.district}
+          {Array.from(new Set(aggregatedDistricts.map(d => d.district))).map((districtName) => (
+            <option key={districtName} value={districtName}>
+              {districtName}
             </option>
           ))}
         </select>
+
 
         {selectedDistrictData && (
           <div className="mt-6 grid md:grid-cols-2 gap-6">
@@ -443,22 +467,21 @@ td b{color:#e5e7eb}
               </tr>
             </thead>
             <tbody>
-              {rankedDistricts.map((district, index) => (
+              {aggregatedDistricts.map((district, index) => (
                 <tr
                   key={district.district}
                   className={`border-b border-slate-800 ${index % 2 === 0 ? 'bg-slate-900/30' : 'bg-transparent'}`}
                 >
                   <td className="py-3 px-4">
                     <span
-                      className={`inline-flex items-center justify-center size-6 rounded-full ${
-                        index === 0
+                      className={`inline-flex items-center justify-center size-6 rounded-full ${index === 0
                           ? 'bg-yellow-400 text-yellow-900'
                           : index === 1
                             ? 'bg-slate-300 text-slate-900'
                             : index === 2
                               ? 'bg-orange-400 text-orange-900'
                               : 'bg-slate-700 text-slate-200'
-                      }`}
+                        }`}
                     >
                       {index + 1}
                     </span>

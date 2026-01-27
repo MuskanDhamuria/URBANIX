@@ -38,7 +38,19 @@ export function RiskMapping({ data }: RiskMappingProps) {
 
   const enrichedData = useMemo(() => {
     if (!data) return [];
-    return data.districts.map((d) => ({
+
+    // Create a map to keep only the latest data per district
+    const latestDistrictMap: Record<string, typeof data.districts[0]> = {};
+
+    data.districts.forEach((d) => {
+      const existing = latestDistrictMap[d.district];
+      if (!existing || d.year > existing.year) {
+        latestDistrictMap[d.district] = d;
+      }
+    });
+
+    // Convert map to array and enrich
+    return Object.values(latestDistrictMap).map((d) => ({
       ...d,
       riskScore: calculateRiskScore(d),
       vulnerability: calculateVulnerability(d),
@@ -46,6 +58,7 @@ export function RiskMapping({ data }: RiskMappingProps) {
       floodRiskNorm: (d.floodRisk || 0) * 10,
     }));
   }, [data]);
+  
 
   const sortedByRisk = useMemo(() => {
     return [...enrichedData].sort((a, b) => b.riskScore - a.riskScore);

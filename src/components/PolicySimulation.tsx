@@ -44,14 +44,29 @@ export function PolicySimulation({ data }: PolicySimulationProps) {
   const baseline = useMemo(() => {
     if (!data || data.districts.length === 0) return null;
 
-    const districts = data.districts;
+    // Keep only latest-year entries per district
+    const latestDistrictMap: Record<string, typeof data.districts[0]> = {};
+    data.districts.forEach((d) => {
+      const existing = latestDistrictMap[d.district];
+      if (!existing || d.year > existing.year) {
+        latestDistrictMap[d.district] = d;
+      }
+    });
+
+    const districts = Object.values(latestDistrictMap);
+
     return {
       avgEmissions: districts.reduce((sum, d) => sum + (100 - d.airQuality), 0) / districts.length,
       avgTravelTime: districts.reduce((sum, d) => sum + (100 - d.mobilityEfficiency), 0) / districts.length,
       avgHeatExposure: districts.reduce((sum, d) => sum + (d.heatIslandIntensity || 0) * 20, 0) / districts.length,
       avgFloodRisk: districts.reduce((sum, d) => sum + (d.floodRisk || 0) * 10, 0) / districts.length,
       avgLiveability: districts.reduce((sum, d) => {
-        const score = (d.airQuality * 0.25 + d.mobilityEfficiency * 0.2 + d.greenSpaceAccess * 0.2 + d.healthScore * 0.25 + Math.max(0, 100 - d.populationDensity / 100) * 0.1);
+        const score =
+          d.airQuality * 0.25 +
+          d.mobilityEfficiency * 0.2 +
+          d.greenSpaceAccess * 0.2 +
+          d.healthScore * 0.25 +
+          Math.max(0, 100 - d.populationDensity / 100) * 0.1;
         return sum + score;
       }, 0) / districts.length,
     };
