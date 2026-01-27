@@ -243,7 +243,7 @@ export function DataImport({ onDataLoaded, currentData }: DataImportProps) {
             <div>
               <p className="text-green-300">Data successfully imported!</p>
               <p className="text-green-400/80 mt-1">
-                {currentData?.districts.length} districts loaded. You can now explore the analytics
+                {new Set(currentData.districts.map(d => d.district)).size} districts loaded. You can now explore the analytics
                 modules.
               </p>
             </div>
@@ -286,7 +286,7 @@ export function DataImport({ onDataLoaded, currentData }: DataImportProps) {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="p-4 bg-gradient-to-br from-blue-500/20 to-blue-600/20 border border-blue-500/30 rounded-xl">
               <p className="text-blue-300">Districts</p>
-              <p className="text-white text-2xl mt-1">{currentData.districts.length}</p>
+              <p className="text-white text-2xl mt-1">{new Set(currentData.districts.map(d => d.district)).size}</p>
             </div>
             <div className="p-4 bg-gradient-to-br from-green-500/20 to-green-600/20 border border-green-500/30 rounded-xl">
               <p className="text-green-300">Avg Air Quality</p>
