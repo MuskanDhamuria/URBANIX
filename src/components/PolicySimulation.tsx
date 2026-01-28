@@ -44,18 +44,38 @@ export function PolicySimulation({ data }: PolicySimulationProps) {
   const baseline = useMemo(() => {
     if (!data || data.districts.length === 0) return null;
 
-    const districts = data.districts;
+    // Keep only latest-year entries per district
+    const latestDistrictMap: Record<string, typeof data.districts[0]> = {};
+    data.districts.forEach((d) => {
+      const existing = latestDistrictMap[d.district];
+      if (!existing || d.year > existing.year) {
+        latestDistrictMap[d.district] = d;
+      }
+    });
+
+    const districts = Object.values(latestDistrictMap);
+
     return {
       avgEmissions: districts.reduce((sum, d) => sum + (100 - d.airQuality), 0) / districts.length,
       avgTravelTime: districts.reduce((sum, d) => sum + (100 - d.mobilityEfficiency), 0) / districts.length,
       avgHeatExposure: districts.reduce((sum, d) => sum + (d.heatIslandIntensity || 0) * 20, 0) / districts.length,
       avgFloodRisk: districts.reduce((sum, d) => sum + (d.floodRisk || 0) * 10, 0) / districts.length,
       avgLiveability: districts.reduce((sum, d) => {
-        const score = (d.airQuality * 0.25 + d.mobilityEfficiency * 0.2 + d.greenSpaceAccess * 0.2 + d.healthScore * 0.25 + Math.max(0, 100 - d.populationDensity / 100) * 0.1);
+        const score =
+          d.airQuality * 0.25 +
+          d.mobilityEfficiency * 0.2 +
+          d.greenSpaceAccess * 0.2 +
+          d.healthScore * 0.25 +
+          Math.max(0, 100 - d.populationDensity / 100) * 0.1;
         return sum + score;
       }, 0) / districts.length,
     };
   }, [data]);
+
+  const percentChange = (baseline: number, simulated: number) => {
+    if (baseline === 0) return 0;
+    return ((simulated - baseline) / baseline) * 100;
+  };
 
   // Simulate policy impacts using ML-based regression models
   const simulatedImpacts = useMemo(() => {
@@ -70,24 +90,31 @@ export function PolicySimulation({ data }: PolicySimulationProps) {
     // Calculate impacts
     const emissionsChange = -transportCoef * 15 - trafficCoef * 20 - greenSpaceCoef * 8;
     const travelTimeChange = -transportCoef * 12 + trafficCoef * 5 - densityCoef * 8;
-    const heatExposureChange = -greenSpaceCoef * 18 - densityCoef * 10;
-    const floodRiskChange = -greenSpaceCoef * 12 + densityCoef * 8;
-    const liveabilityChange = transportCoef * 8 + greenSpaceCoef * 10 - trafficCoef * 3 + densityCoef * 5;
+    const heatExposureChange = -greenSpaceCoef * 18 - densityCoef * 6;
+    const floodRiskChange = -greenSpaceCoef * 12 + densityCoef * 5;
+    const liveabilityChange = transportCoef * 8 + greenSpaceCoef * 10 - trafficCoef * 3 + densityCoef * 3;
+
+    const emissions = baseline.avgEmissions + emissionsChange;
+    const travelTime = baseline.avgTravelTime + travelTimeChange;
+    const heatExposure = baseline.avgHeatExposure + heatExposureChange;
+    const floodRisk = baseline.avgFloodRisk + floodRiskChange;
+    const liveability = baseline.avgLiveability + liveabilityChange;
 
     return {
-      emissions: baseline.avgEmissions + emissionsChange,
-      travelTime: baseline.avgTravelTime + travelTimeChange,
-      heatExposure: baseline.avgHeatExposure + heatExposureChange,
-      floodRisk: baseline.avgFloodRisk + floodRiskChange,
-      liveability: baseline.avgLiveability + liveabilityChange,
+      emissions,
+      travelTime,
+      heatExposure,
+      floodRisk,
+      liveability,
       changes: {
-        emissions: emissionsChange,
-        travelTime: travelTimeChange,
-        heatExposure: heatExposureChange,
-        floodRisk: floodRiskChange,
-        liveability: liveabilityChange,
+        emissions: percentChange(baseline.avgEmissions, emissions),
+        travelTime: percentChange(baseline.avgTravelTime, travelTime),
+        heatExposure: percentChange(baseline.avgHeatExposure, heatExposure),
+        floodRisk: percentChange(baseline.avgFloodRisk, floodRisk),
+        liveability: percentChange(baseline.avgLiveability, liveability),
       },
     };
+
   }, [policyParams, baseline]);
 
   const handleParamChange = (param: keyof PolicyParams, value: number) => {
@@ -109,72 +136,106 @@ export function PolicySimulation({ data }: PolicySimulationProps) {
     setHasSimulated(false);
   };
 
+  const round1dp = (v: number) => Math.round(v * 10) / 10;
+
+  const clamp = (v: number) => Math.min(100, Math.max(0, v));
+
   const comparisonData = useMemo(() => {
     if (!baseline || !simulatedImpacts || !hasSimulated) return [];
     return [
       {
         metric: 'Emissions',
-        baseline: baseline.avgEmissions.toFixed(1),
-        simulated: simulatedImpacts.emissions.toFixed(1),
+        baseline: round1dp(baseline.avgEmissions),
+        simulated: round1dp(simulatedImpacts.emissions),
       },
       {
         metric: 'Travel Time',
-        baseline: baseline.avgTravelTime.toFixed(1),
-        simulated: simulatedImpacts.travelTime.toFixed(1),
+        baseline: round1dp(baseline.avgTravelTime),
+        simulated: round1dp(simulatedImpacts.travelTime),
       },
       {
         metric: 'Heat Exposure',
-        baseline: baseline.avgHeatExposure.toFixed(1),
-        simulated: simulatedImpacts.heatExposure.toFixed(1),
+        baseline: round1dp(baseline.avgHeatExposure),
+        simulated: round1dp(simulatedImpacts.heatExposure),
       },
       {
         metric: 'Flood Risk',
-        baseline: baseline.avgFloodRisk.toFixed(1),
-        simulated: simulatedImpacts.floodRisk.toFixed(1),
+        baseline: round1dp(baseline.avgFloodRisk),
+        simulated: round1dp(simulatedImpacts.floodRisk),
       },
       {
         metric: 'Liveability',
-        baseline: baseline.avgLiveability.toFixed(1),
-        simulated: simulatedImpacts.liveability.toFixed(1),
+        baseline: round1dp(baseline.avgLiveability),
+        simulated: round1dp(simulatedImpacts.liveability),
       },
     ];
   }, [baseline, simulatedImpacts, hasSimulated]);
 
   const radarComparisonData = useMemo(() => {
     if (!baseline || !simulatedImpacts || !hasSimulated) return [];
+
     return [
       {
         metric: 'Low Emissions',
-        baseline: 100 - baseline.avgEmissions,
-        simulated: 100 - simulatedImpacts.emissions,
+        value: round1dp(clamp(100 - baseline.avgEmissions)),
       },
       {
         metric: 'Low Travel Time',
-        baseline: 100 - baseline.avgTravelTime,
-        simulated: 100 - simulatedImpacts.travelTime,
+        value: round1dp(clamp(100 - baseline.avgTravelTime)),
       },
       {
         metric: 'Low Heat',
-        baseline: Math.max(0, 100 - baseline.avgHeatExposure),
-        simulated: Math.max(0, 100 - simulatedImpacts.heatExposure),
+        value: round1dp(clamp(100 - baseline.avgHeatExposure)),
       },
       {
         metric: 'Low Flood Risk',
-        baseline: 100 - baseline.avgFloodRisk,
-        simulated: 100 - simulatedImpacts.floodRisk,
+        value: round1dp(clamp(100 - baseline.avgFloodRisk)),
       },
       {
         metric: 'Liveability',
-        baseline: baseline.avgLiveability,
-        simulated: simulatedImpacts.liveability,
+        value: round1dp(baseline.avgLiveability),
       },
     ];
   }, [baseline, simulatedImpacts, hasSimulated]);
 
+  const baselineRadarData = useMemo(() => {
+    if (!baseline) return [];
+    return [
+      { metric: 'Low Emissions', value: round1dp(100 - baseline.avgEmissions) },
+      { metric: 'Low Travel Time', value: round1dp(100 - baseline.avgTravelTime) },
+      { metric: 'Low Heat', value: round1dp(100 - baseline.avgHeatExposure) },
+      { metric: 'Low Flood Risk', value: round1dp(100 - baseline.avgFloodRisk) },
+      { metric: 'Liveability', value: round1dp(baseline.avgLiveability) },
+    ];
+  }, [baseline]);
+
+  const simulatedRadarData = useMemo(() => {
+    if (!simulatedImpacts) return [];
+    return [
+      { metric: 'Low Emissions', value: round1dp(100 - simulatedImpacts.emissions) },
+      { metric: 'Low Travel Time', value: round1dp(100 - simulatedImpacts.travelTime) },
+      { metric: 'Low Heat', value: round1dp(100 - simulatedImpacts.heatExposure) },
+      { metric: 'Low Flood Risk', value: round1dp(100 - simulatedImpacts.floodRisk) },
+      { metric: 'Liveability', value: round1dp(simulatedImpacts.liveability) },
+    ];
+  }, [simulatedImpacts]);
+  
+  const combinedRadarData = useMemo(() => {
+    if (!baseline || !simulatedImpacts || !hasSimulated) return [];
+
+    return baselineRadarData.map((b, i) => ({
+      metric: b.metric,
+      baseline: b.value,
+      simulated: simulatedRadarData[i]?.value ?? 0,
+    }));
+  }, [baselineRadarData, simulatedRadarData, baseline, simulatedImpacts, hasSimulated]);
+
+  const [radarView, setRadarView] = useState<'baseline' | 'simulated' | 'combined'>('combined');  
+
   if (!data || data.districts.length === 0 || !baseline) {
     return (
       <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 p-12 text-center">
-        <AlertTriangle className="size-12 text-amber-400 mx-auto mb-4" />
+        <AlertTriangle className="size-12 text-orange-400 mx-auto mb-4" />
         <p className="text-slate-400">No data available. Please import data first.</p>
       </div>
     );
@@ -352,14 +413,20 @@ export function PolicySimulation({ data }: PolicySimulationProps) {
           </div>
 
           {/* Before/After Comparison */}
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-            <h3 className="text-slate-900 mb-4">Before/After Comparison</h3>
+          <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 p-6">
+            <h3 className="text-white mb-4">Before/After Comparison</h3>
             <ResponsiveContainer width="100%" height={400}>
               <BarChart data={comparisonData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis dataKey="metric" />
-                <YAxis />
-                <Tooltip />
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                <XAxis dataKey="metric" stroke="#94a3b8" />
+                <YAxis stroke="#94a3b8" />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#020617',
+                    borderColor: '#334155',
+                    color: '#e5e7eb',
+                  }}
+                />
                 <Legend />
                 <Bar dataKey="baseline" fill="#64748b" name="Baseline" />
                 <Bar dataKey="simulated" fill="#3b82f6" name="After Policy" />
@@ -368,68 +435,101 @@ export function PolicySimulation({ data }: PolicySimulationProps) {
           </div>
 
           {/* Trade-off Visualization */}
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-            <h3 className="text-slate-900 mb-4">Policy Trade-offs Radar</h3>
+          <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-700/50 p-6">
+            <h3 className="text-white mb-4">Policy Impact Radar Comparison</h3>
+            <div className="flex gap-3 mb-4">
+              <button
+                onClick={() => setRadarView('baseline')}
+                className={`px-4 py-2 rounded-lg border ${radarView === 'baseline' ? 'bg-slate-700 text-slate-300 border-slate-600' : 'bg-blue-600 text-white border-blue-600'
+                  }`}
+              >
+                Baseline
+              </button>
+              <button
+                onClick={() => setRadarView('simulated')}
+                className={`px-4 py-2 rounded-lg border ${radarView === 'simulated' ? 'bg-slate-700 text-slate-300 border-slate-600' : 'bg-blue-600 text-white border-blue-600'
+                  }`}
+              >
+                After Policy
+              </button>
+              <button
+                onClick={() => setRadarView('combined')}
+                className={`px-4 py-2 rounded-lg border ${radarView === 'combined' ? 'bg-slate-700 text-slate-300 border-slate-600' : 'bg-blue-600 text-white border-blue-600'
+                  }`}
+              >
+                Combined
+              </button>
+
+            </div>
             <ResponsiveContainer width="100%" height={400}>
-              <RadarChart data={radarComparisonData}>
-                <PolarGrid stroke="#e2e8f0" />
-                <PolarAngleAxis dataKey="metric" />
-                <PolarRadiusAxis domain={[0, 100]} />
-                <Radar
-                  name="Baseline"
-                  dataKey="baseline"
-                  stroke="#64748b"
-                  fill="#64748b"
-                  fillOpacity={0.3}
-                />
-                <Radar
-                  name="After Policy"
-                  dataKey="simulated"
-                  stroke="#3b82f6"
-                  fill="#3b82f6"
-                  fillOpacity={0.5}
-                />
+              <RadarChart
+                data={
+                  radarView === 'baseline'
+                    ? baselineRadarData.map(d => ({ ...d, baseline: d.value }))
+                    : radarView === 'simulated'
+                      ? simulatedRadarData.map(d => ({ ...d, simulated: d.value }))
+                      : combinedRadarData
+                }
+              >
+                <PolarGrid stroke="#334155" />
+                <PolarAngleAxis dataKey="metric" stroke="#94a3b8" />
+                <PolarRadiusAxis domain={[0, 100]} stroke="#94a3b8" />
+
+                {radarView === 'baseline' && (
+                  <Radar key="baseline" dataKey="baseline" name="Baseline" stroke="#64748b" fill="#64748b" fillOpacity={0.4} isAnimationActive={true} />
+                )}
+                {radarView === 'simulated' && (
+                  <Radar key="simulated" dataKey="simulated" name="After Policy" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.5} isAnimationActive={true} />
+                )}
+                {radarView === 'combined' && (
+                  <>
+                    <Radar key="combined-baseline" dataKey="baseline" name="Baseline" stroke="#64748b" fill="#64748b" fillOpacity={0.4} isAnimationActive={true} />
+                    <Radar key="combined-simulated" dataKey="simulated" name="After Policy" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.5} isAnimationActive={true} animationDuration={2000}/>
+                  </>
+                )}
+
                 <Legend />
                 <Tooltip />
               </RadarChart>
             </ResponsiveContainer>
           </div>
 
+
           {/* Risk Indicators */}
-          <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-            <h3 className="text-slate-900 mb-4">Risk Indicators for Decision Support</h3>
+          <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 p-6">
+            <h3 className="text-white mb-4">Risk Indicators for Decision Support</h3>
             <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <h4 className="text-slate-700 mb-3">Positive Outcomes</h4>
+                <h4 className="text-slate-200 mb-3">Positive Outcomes</h4>
                 <div className="space-y-2">
                   {simulatedImpacts.changes.emissions < 0 && (
-                    <div className="flex items-start gap-3 p-3 bg-green-50 rounded-lg">
-                      <TrendingDown className="size-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex items-start gap-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                      <TrendingDown className="size-5 text-green-400 flex-shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-green-900">Emissions Reduction</p>
-                        <p className="text-green-700">
+                        <p className="text-green-300">Emissions Reduction</p>
+                        <p className="text-green-400/80">
                           {Math.abs(simulatedImpacts.changes.emissions).toFixed(1)}% decrease in urban emissions
                         </p>
                       </div>
                     </div>
                   )}
                   {simulatedImpacts.changes.heatExposure < 0 && (
-                    <div className="flex items-start gap-3 p-3 bg-green-50 rounded-lg">
+                    <div className="flex items-start gap-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
                       <TrendingDown className="size-5 text-green-600 flex-shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-green-900">Heat Island Mitigation</p>
-                        <p className="text-green-700">
+                        <p className="text-green-300">Heat Island Mitigation</p>
+                        <p className="text-green-400">
                           {Math.abs(simulatedImpacts.changes.heatExposure).toFixed(1)}% reduction in heat exposure
                         </p>
                       </div>
                     </div>
                   )}
                   {simulatedImpacts.changes.liveability > 0 && (
-                    <div className="flex items-start gap-3 p-3 bg-green-50 rounded-lg">
+                    <div className="flex items-start gap-3 p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
                       <TrendingUp className="size-5 text-green-600 flex-shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-green-900">Liveability Improvement</p>
-                        <p className="text-green-700">
+                        <p className="text-green-300">Liveability Improvement</p>
+                        <p className="text-green-400">
                           {simulatedImpacts.changes.liveability.toFixed(1)}% increase in overall liveability score
                         </p>
                       </div>
@@ -438,36 +538,36 @@ export function PolicySimulation({ data }: PolicySimulationProps) {
                 </div>
               </div>
               <div>
-                <h4 className="text-slate-700 mb-3">Potential Challenges</h4>
+                <h4 className="text-slate-200 mb-3">Potential Challenges</h4>
                 <div className="space-y-2">
                   {simulatedImpacts.changes.travelTime > 0 && (
-                    <div className="flex items-start gap-3 p-3 bg-amber-50 rounded-lg">
-                      <AlertTriangle className="size-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex items-start gap-3 p-3 bg-orange-500 border border-orange-500 rounded-lg">
+                      <AlertTriangle className="size-5 text-orange-400 flex-shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-amber-900">Increased Travel Time</p>
-                        <p className="text-amber-700">
+                        <p className="text-orange-300">Increased Travel Time</p>
+                        <p className="text-orange-400">                  
                           {simulatedImpacts.changes.travelTime.toFixed(1)}% increase - may require public transport improvements
                         </p>
                       </div>
                     </div>
                   )}
                   {simulatedImpacts.changes.floodRisk > 0 && (
-                    <div className="flex items-start gap-3 p-3 bg-amber-50 rounded-lg">
-                      <AlertTriangle className="size-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex items-start gap-3 p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+                      <AlertTriangle className="size-5 text-orange-400 flex-shrink-0 mt-0.5" />
                       <div>
-                        <p className="text-amber-900">Flood Risk Elevation</p>
-                        <p className="text-amber-700">
+                        <p className="text-orange-300">Flood Risk Elevation</p>
+                        <p className="text-orange-400">
                           {simulatedImpacts.changes.floodRisk.toFixed(1)}% increase - enhanced drainage systems needed
                         </p>
                       </div>
                     </div>
                   )}
                   {Math.abs(simulatedImpacts.changes.liveability) < 2 && (
-                    <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
-                      <AlertTriangle className="size-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex items-start gap-3 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                      <AlertTriangle className="size-5 text-blue-400" />
                       <div>
-                        <p className="text-blue-900">Minimal Overall Impact</p>
-                        <p className="text-blue-700">
+                        <p className="text-blue-300">Minimal Overall Impact</p>
+                        <p className="text-blue-400">
                           Current policy mix shows limited net benefit - consider adjusting parameters
                         </p>
                       </div>
@@ -482,9 +582,9 @@ export function PolicySimulation({ data }: PolicySimulationProps) {
 
       {/* Instructions when not simulated */}
       {!hasSimulated && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <h3 className="text-blue-900 mb-2">Ready to Simulate</h3>
-          <p className="text-blue-700">
+        <div className="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-6">
+          <h3 className="text-white mb-2">Ready to Simulate</h3>
+          <p className="text-slate-400">      
             Adjust the policy parameters above using the sliders, then click "Run Simulation" to model
             the impacts on emissions, travel time, heat exposure, flood risk, and overall liveability.
           </p>

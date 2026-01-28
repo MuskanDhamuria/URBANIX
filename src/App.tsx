@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileSpreadsheet, TrendingUp, MapPin, GitBranch, Info, Upload, Sparkles, ArrowRight } from 'lucide-react';
+import { FileSpreadsheet, TrendingUp, MapPin, GitBranch, Info, Upload, Sparkles, ArrowRight, MessageCircle } from 'lucide-react';
 import { DataImport } from './components/DataImport';
 import { LiveabilityDashboard } from './components/LiveabilityDashboard';
 import { RiskMapping } from './components/RiskMapping';
@@ -7,6 +7,7 @@ import { PolicySimulation } from './components/PolicySimulation';
 import { AIDecisionLayer } from './components/AIDecisionLayer';
 import { HowToPage } from './components/HowToPage';
 import { LandingPage } from './components/LandingPage';
+import { Chatbot } from './components/Chatbot';
 
 export type UrbanData = {
   districts: Array<{
@@ -34,6 +35,7 @@ export default function App() {
     { id: 'risk', label: 'Risk Mapping', icon: MapPin },
     { id: 'policy', label: 'Policy Simulation', icon: GitBranch },
     { id: 'ai', label: 'AI Decision Layer', icon: Sparkles },
+    { id: 'chatbot', label: 'AI Chatbot', icon: MessageCircle },
     { id: 'howto', label: 'How To', icon: Info },
   ];
 
@@ -111,6 +113,7 @@ export default function App() {
         {activeTab === 'risk' && <RiskMapping data={urbanData} />}
         {activeTab === 'policy' && <PolicySimulation data={urbanData} />}
         {activeTab === 'ai' && <AIDecisionLayer data={urbanData} />}
+        {activeTab === 'chatbot' && <Chatbot data={urbanData} />}
         {activeTab === 'howto' && <HowToPage />}
       </main>
     </div>
