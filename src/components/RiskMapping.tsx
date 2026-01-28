@@ -72,20 +72,92 @@ export function RiskMapping({ data }: RiskMappingProps) {
 
 
   const getRiskColor = (score: number) => {
-    const s = maxRiskScore || 1000;
-    if (score >= 0.7 * s) return '#ef4444';  // Critical
-    if (score >= 0.5 * s) return '#f59e0b';  // High
-    if (score >= 0.3 * s) return '#fbbf24';  // Moderate
-    return '#10b981';                        // Low
+    const level = getRiskLevel(score);
+    if (level === 'Critical') return '#ef4444';
+    if (level === 'High') return '#f0a525';
+    if (level === 'Moderate') return '#f0c14a';
+    return '#10b981';
   };
+
 
   const getRiskLevel = (score: number) => {
     const s = maxRiskScore || 1000;
-    if (score >= 0.7 * s) return 'Critical';
+    if (score >= 0.6 * s) return 'Critical';
     if (score >= 0.5 * s) return 'High';
     if (score >= 0.3 * s) return 'Moderate';
     return 'Low';
   };
+  
+
+  const getRiskBadgeClasses = (level: string) => {
+  switch (level) {
+    case 'Critical':
+      return 'bg-red-500/20 text-red-300 border border-red-500/30';
+    case 'High':
+      return 'bg-orange-500/20 text-orange-300 border border-orange-500/30';
+    case 'Moderate':
+      return 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30';
+    default:
+      return 'bg-green-500/20 text-green-300 border border-green-500/30';
+  }
+};
+
+const getLeftBorderColor = (score: number) => getRiskColor(score);
+
+
+  const CustomScatterTooltip = ({ active, payload }: any) => {
+  if (!active || !payload || !payload.length) return null;
+
+
+
+  // Scatter payload structure: payload[0].payload is your district object
+  const d = payload[0].payload;
+  const color = getRiskColor(d.riskScore);
+
+  return (
+    <div className="bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 shadow-xl">
+      <p className="text-slate-200 font-medium mb-2">{d.district}</p>
+
+      <div className="space-y-1 text-sm">
+        <div className="flex justify-between gap-6">
+          <span className="text-slate-400">Risk Score</span>
+          <span className="font-semibold" style={{ color }}>{d.riskScore}</span>
+        </div>
+
+        <div className="flex justify-between gap-6">
+          <span className="text-slate-400">Population Density</span>
+          <span className="text-slate-200">{d.populationDensity}</span>
+        </div>
+
+        <div className="flex justify-between gap-6">
+          <span className="text-slate-400">Vulnerability</span>
+          <span className="text-slate-200">{d.vulnerability}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+  const CustomRiskTooltip = ({ active, payload, label }: any) => {
+  if (!active || !payload || !payload.length) return null;
+
+  const data = payload[0].payload;
+  const color = getRiskColor(data.riskScore);
+
+  return (
+    <div className="bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 shadow-xl">
+      <p className="text-slate-200 font-medium mb-1">{label}</p>
+
+      <p
+        className="font-semibold"
+        style={{ color }}
+      >
+        Composite Risk Score : {data.riskScore}
+      </p>
+    </div>
+  );
+};
 
 
   const hotspots = useMemo(() => {
@@ -167,38 +239,101 @@ export function RiskMapping({ data }: RiskMappingProps) {
             );
           })}
         </div>
+    <div className="relative">
+<div className="relative w-full">
+  <ResponsiveContainer width="100%" height={520}>
+    <BarChart
+      data={sortedByRisk}
+      margin={{ top: 24, right: 24, left: 0, bottom: 60 }}
+    >
+      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
 
-        <ResponsiveContainer width="100%" height={400}>
-          <BarChart data={sortedByRisk}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-            <XAxis dataKey="district" angle={-45} textAnchor="end" height={120} stroke="#94a3b8" />
-            <YAxis domain={[0, 100]} stroke="#94a3b8" />
-            
-            <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '0.5rem' }} />
-            <Legend />
-            {selectedRiskLayer === 'composite' && (
-              <Bar dataKey="riskScore" name="Composite Risk Score"  fill="#ef4444">
-                {sortedByRisk.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={getRiskColor(entry.riskScore)} />
-                ))}
-              </Bar>
-            )}
-            {selectedRiskLayer === 'heat' && (
-              <Bar dataKey="heatRiskNorm" fill="#ef4444" name="Heat Island Intensity" />
-            )}
-            {selectedRiskLayer === 'flood' && (
-              <Bar dataKey="floodRiskNorm" fill="#3b82f6" name="Flood Risk" />
-            )}
-            {selectedRiskLayer === 'pollution' && (
-              <Bar dataKey="pollutionExposure" fill="#8b5cf6" name="Pollution Exposure" />
-            )}
-          </BarChart>
-        </ResponsiveContainer>
+      <XAxis
+        dataKey="district"
+        angle={-45}
+        textAnchor="end"
+        height={70}
+        tickMargin={10}
+        stroke="#94a3b8"
+      />
+      
+
+      <YAxis stroke="#94a3b8" domain={[ 0, (dataMax: number) => Math.ceil(dataMax/50)*50, ]}/>
+
+
+      <Tooltip content={<CustomRiskTooltip />} />
+
+      <Legend
+        iconType="square"
+        verticalAlign="top"
+        align="right"
+        wrapperStyle={{
+          position: 'absolute',
+          top: 8,
+          right: 12,
+          pointerEvents: 'none',
+        }}
+      />
+
+      {selectedRiskLayer === 'composite' && (
+        <Bar dataKey="riskScore" name="Composite Risk Score" fill="#ffffff">
+          {sortedByRisk.map((entry, index) => (
+            <Cell key={index} fill={getRiskColor(entry.riskScore)} />
+          ))}
+        </Bar>
+      )}
+
+      {selectedRiskLayer === 'heat' && (
+        <Bar dataKey="heatRiskNorm" fill="#ef4444" name="Heat Island Intensity" />
+      )}
+      {selectedRiskLayer === 'flood' && (
+        <Bar dataKey="floodRiskNorm" fill="#3b82f6" name="Flood Risk" />
+      )}
+      {selectedRiskLayer === 'pollution' && (
+        <Bar dataKey="pollutionExposure" fill="#8b5cf6" name="Pollution Exposure" />
+      )}
+    </BarChart>
+  </ResponsiveContainer>
+
+</div>
+
+
+    {selectedRiskLayer === 'composite' && (
+      <div className="mt-3">
+        <p className="text-center text-slate-500 text-[11px] mb-2 tracking-wide">
+          Risk Severity Levels
+        </p>
+
+        <div className="flex justify-center gap-6 text-xs">
+          {[
+            { label: 'Critical', color: '#ef4444' },
+            { label: 'High', color: '#f0a525' },
+            { label: 'Moderate', color: '#f0c14a' },
+            { label: 'Low', color: '#10b981' },
+          ].map((item) => (
+            <div key={item.label} className="flex items-center gap-1.5">
+              <span
+                style={{
+                  width: 10,
+                  height: 10,
+                  backgroundColor: item.color,
+                  borderRadius: 3,
+                }}
+              />
+              <span className="text-slate-300">{item.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
+    </div>
+
       </div>
 
       <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 p-6">
         <h3 className="text-white mb-4">Vulnerability Assessment (Risk × Population Exposure)</h3>
-        <ResponsiveContainer width="100%" height={400}>
+        <ResponsiveContainer width="100%" height={650}>
           <ScatterChart margin={{bottom: 30 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
 
@@ -228,20 +363,19 @@ export function RiskMapping({ data }: RiskMappingProps) {
             />
 
             <ZAxis type="number" dataKey="vulnerability" range={[20, 180]} />
+            <Tooltip content={<CustomScatterTooltip />} />
 
-            <Tooltip
-              cursor={{ strokeDasharray: '3 3' }}
-              contentStyle={{
-                backgroundColor: '#1e293b',
-                border: '1px solid #334155',
-                borderRadius: '0.5rem',
+            <Legend
+              iconType="circle"
+              verticalAlign="top"
+              align="right"
+              wrapperStyle={{
+                top: -20,
+                right: 0,
               }}
             />
 
-            <Legend verticalAlign="top" align="right" iconType="circle" 
-            />
-
-            <Scatter name="Districts" data={enrichedData} fill="#ef4444">
+            <Scatter name="Districts" data={enrichedData} padding={{  bottom: 10 }} fill="#ffffff">
               {enrichedData.map((entry, index) => (
                 <Cell key={index} fill={getRiskColor(entry.riskScore)} />
               ))}
@@ -264,10 +398,20 @@ export function RiskMapping({ data }: RiskMappingProps) {
             {hotspots.map((district) => (
               <div key={district.district} className="border-l-4 p-4 bg-slate-900/50 backdrop-blur-xl rounded border border-slate-700/50" style={{ borderLeftColor: getRiskColor(district.riskScore) }}>
                 <div className="flex justify-between items-start mb-2">
-                  <h4 className="text-">{district.district}</h4>
-                  <span className={`px-2 py-1 text-xs rounded ${district.riskScore >= 70 ? 'bg-red-500/20 text-red-300 border border-red-500/30' : 'bg-orange-500/20 text-orange-300 border border-orange-500/30'}`}>
-                    {getRiskLevel(district.riskScore)}
-                  </span>
+                  <h4
+                    className="font-semibold tracking-wide"
+                    style={{ color: getRiskColor(district.riskScore) }}
+                  >
+                    {district.district}
+                  </h4>
+                  {(() => {
+                    const level = getRiskLevel(district.riskScore);
+                    return (
+                      <span className={`px-2 py-1 text-xs rounded border ${getRiskBadgeClasses(level)}`}>
+                        {level}
+                      </span>
+                    );
+                  })()}
                 </div>
                 <div className="space-y-1 text-sm">
                   <div className="flex justify-between">
@@ -276,7 +420,7 @@ export function RiskMapping({ data }: RiskMappingProps) {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-400">Heat Island:</span>
-                    <span className="text-slate-200">{district.heatIslandIntensity?.toFixed(1) || 'N/A'}°C</span>
+                    <span className="text-slate-200">{district.heatIslandIntensity?.toFixed(1) || 'N/A'}°F</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-slate-400">Flood Risk:</span>
@@ -322,9 +466,15 @@ export function RiskMapping({ data }: RiskMappingProps) {
                 <tr key={district.district} className={`border-b border-slate-800 ${index % 2 === 0 ? 'bg-slate-900/30' : 'bg-transparent'}`}>
                   <td className="py-3 px-4 text-slate-200">{district.district}</td>
                   <td className="py-3 px-4">
-                    <span className={`inline-block px-2 py-1 rounded text-xs ${district.riskScore >= 70 ? 'bg-red-500/20 text-red-300' : district.riskScore >= 50 ? 'bg-orange-500/20 text-orange-300' : district.riskScore >= 30 ? 'bg-yellow-500/20 text-yellow-300' : 'bg-green-500/20 text-green-300'}`}>
-                      {getRiskLevel(district.riskScore)}
+                {(() => {
+                  const level = getRiskLevel(district.riskScore);
+                  return (
+                    <span className={`inline-block px-2 py-1 rounded text-xs border ${getRiskBadgeClasses(level)}`}>
+                      {level}
                     </span>
+                  );
+                })()}
+
                   </td>
                   <td className="py-3 px-4">
                     <span style={{ color: getRiskColor(district.riskScore) }}>{district.riskScore}</span>
