@@ -564,10 +564,10 @@ const buildHtmlReport = () => {
         formatter={(value) => [`${value.toFixed(1)}`, 'Score']}
         labelFormatter={(label) => `Year: ${label}`}
       />
-      <Legend />
+            <Legend
+              wrapperStyle={{ paddingTop: 40 }} />
       <Line
       wrapperStyle={{ 
-    top: 40,            // <-- increase this to move text down
     // optional: font styling
     color: "#94a3b8",
     fontSize: "14px"
