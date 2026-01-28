@@ -11,7 +11,7 @@ type LiveabilityDashboardProps = {
 
 export function LiveabilityDashboard({ data }: LiveabilityDashboardProps) {
   const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
-  const [selectedIndicator, setSelectedIndicator] = useState<string | null>('airQuality'); 
+  const [selectedIndicator, setSelectedIndicator] = useState<string | null>('airQuality');
 
   // Calculate composite liveability score using weighted PCA-inspired approach
   const calculateLiveabilityScore = (district: any) => {
@@ -427,12 +427,12 @@ const buildHtmlReport = () => {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div className="relative overflow-hidden bg-gradient-to-br from-blue-500/20 to-blue-600/20 border border-blue-500/30 backdrop-blur-xl text-white rounded-2xl p-6 shadow-2xl min-h-[200px] mb-8">
+      <div className="relative overflow-hidden bg-gradient-to-br from-blue-500/20 to-blue-600/20 border border-blue-500/30 backdrop-blur-xl text-white rounded-2xl p-6 shadow-2xl">
   <div className="absolute right-0 w-32 h-32 bg-blue-400/20 rounded-full blur-3xl" />
   <TrendingUp className="size-8 mb-2 text-blue-400 relative z-10" />
-  <div className="relative z-10 mt-20"> {/* use mt instead of pt */}
+  <div className="relative z-10 flex flex-col justify-center h-full"> {/* center content vertically */}
     <p className="text-blue-200 mb-1">Average Liveability</p>
-    <p className="text-3xl">
+    <p className="text-3xl font-semibold">
       {(enrichedData.reduce((sum, d) => sum + d.liveabilityScore, 0) / enrichedData.length).toFixed(1)}
     </p>
   </div>
@@ -479,23 +479,46 @@ const buildHtmlReport = () => {
         </ResponsiveContainer>
       </div>
 
-      {/* Component Indicators */}
-      <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 p-6">
-        <h3 className="text-white mb-4">Component Indicators Comparison</h3>
-        <ResponsiveContainer width="100%" height={400}>
-          <BarChart data={aggregatedDistricts}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-            <XAxis dataKey="district" angle={-45} textAnchor="end" height={120} stroke="#94a3b8" />
-            <YAxis domain={[0, 100]} stroke="#94a3b8" />
-            <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '0.5rem' }} />
-            <Legend />
-            <Bar dataKey="airQuality" fill="#10b981" name="Air Quality" />
-            <Bar dataKey="mobilityEfficiency" fill="#6366f1" name="Mobility" />
-            <Bar dataKey="greenSpaceAccess" fill="#22c55e" name="Green Space" />
-            <Bar dataKey="healthScore" fill="#f59e0b" name="Health Score" />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
+     {/* Component Indicators */}
+<div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 p-6">
+  <h3 className="text-white mb-4">Component Indicators Comparison</h3>
+
+  {/* Dropdown to select indicator */}
+  <select
+    value={selectedIndicator || 'airQuality'}
+    onChange={(e) => setSelectedIndicator(e.target.value || null)}
+    className="mb-4 w-full md:w-auto px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-slate-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+  >
+    <option value="airQuality">Air Quality</option>
+    <option value="mobilityEfficiency">Mobility Efficiency</option>
+    <option value="greenSpaceAccess">Green Space</option>
+    <option value="healthScore">Health Score</option>
+  </select>
+
+  <ResponsiveContainer width="100%" height={400}>
+    <BarChart data={aggregatedDistricts}>
+      <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+      <XAxis dataKey="district" angle={-45} textAnchor="end" height={120} stroke="#94a3b8" />
+      <YAxis domain={[0, 100]} stroke="#94a3b8" />
+      <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '0.5rem' }} />
+      <Legend />
+      
+      {/* Show only selected indicator */}
+      {(!selectedIndicator || selectedIndicator === 'airQuality') && (
+        <Bar dataKey="airQuality" fill="#10b981" name="Air Quality" />
+      )}
+      {(!selectedIndicator || selectedIndicator === 'mobilityEfficiency') && (
+        <Bar dataKey="mobilityEfficiency" fill="#6366f1" name="Mobility" />
+      )}
+      {(!selectedIndicator || selectedIndicator === 'greenSpaceAccess') && (
+        <Bar dataKey="greenSpaceAccess" fill="#22c55e" name="Green Space" />
+      )}
+      {(!selectedIndicator || selectedIndicator === 'healthScore') && (
+        <Bar dataKey="healthScore" fill="#f59e0b" name="Health Score" />
+      )}
+    </BarChart>
+  </ResponsiveContainer>
+</div>
 
    {/* Temporal Trend */}
 <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 p-6">
@@ -543,6 +566,12 @@ const buildHtmlReport = () => {
       />
       <Legend />
       <Line
+      wrapperStyle={{ 
+    top: 40,            // <-- increase this to move text down
+    // optional: font styling
+    color: "#94a3b8",
+    fontSize: "14px"
+  }}
         type="monotone"
         dataKey="avgLiveability"
         stroke="#8b5cf6"
@@ -614,8 +643,8 @@ const buildHtmlReport = () => {
     />
     <Legend 
       verticalAlign="bottom"
-      height={36}
-      wrapperStyle={{ paddingTop: '20px' }}
+      align="center"
+      wrapperStyle={{ marginTop: 20 }} 
     />
   </RadarChart>
 </ResponsiveContainer>
