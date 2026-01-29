@@ -72,7 +72,7 @@ export function LiveabilityDashboard({ data }: LiveabilityDashboardProps) {
   }, [enrichedData]);
 
   const avg =
-  enrichedData.reduce((sum, d) => sum + d.liveabilityScore, 0) / enrichedData.length;
+    enrichedData.reduce((sum, d) => sum + d.liveabilityScore, 0) / enrichedData.length;
 
 
   const selectedDistrictData = useMemo(() => {
@@ -81,112 +81,112 @@ export function LiveabilityDashboard({ data }: LiveabilityDashboardProps) {
   }, [selectedDistrict, enrichedData]);
 
   const radarData = useMemo(() => {
-  if (!selectedDistrictData) return [];
-  
-  const getValidValue = (val) => {
-    const num = Number(val);
-    return isNaN(num) ? 0 : Math.min(100, Math.max(0, num));
-  };
-  
-  return [
-    { 
-      indicator: 'Air Quality', 
-      value: getValidValue(selectedDistrictData.airQuality) 
-    },
-    { 
-      indicator: 'Mobility', 
-      value: getValidValue(selectedDistrictData.mobilityEfficiency) 
-    },
-    { 
-      indicator: 'Green Space', 
-      value: getValidValue(selectedDistrictData.greenSpaceAccess) 
-    },
-    { 
-      indicator: 'Health Score', 
-      value: getValidValue(selectedDistrictData.healthScore) 
-    },
-    {
-      indicator: 'Low Density',
-      value: getValidValue(Math.max(0, 100 - selectedDistrictData.populationDensity / 100)),
-    },
-  ];
-}, [selectedDistrictData]);
+    if (!selectedDistrictData) return [];
+
+    const getValidValue = (val) => {
+      const num = Number(val);
+      return isNaN(num) ? 0 : Math.min(100, Math.max(0, num));
+    };
+
+    return [
+      {
+        indicator: 'Air Quality',
+        value: getValidValue(selectedDistrictData.airQuality)
+      },
+      {
+        indicator: 'Mobility',
+        value: getValidValue(selectedDistrictData.mobilityEfficiency)
+      },
+      {
+        indicator: 'Green Space',
+        value: getValidValue(selectedDistrictData.greenSpaceAccess)
+      },
+      {
+        indicator: 'Health Score',
+        value: getValidValue(selectedDistrictData.healthScore)
+      },
+      {
+        indicator: 'Low Density',
+        value: getValidValue(Math.max(0, 100 - selectedDistrictData.populationDensity / 100)),
+      },
+    ];
+  }, [selectedDistrictData]);
   // Generate temporal trend data (mock historical data)
   const temporalData = useMemo(() => {
-  if (!data || data.districts.length === 0) return [];
-  const years = [2020, 2021, 2022, 2023, 2024];
-  const baseScore = enrichedData.reduce((sum, d) => sum + d.liveabilityScore, 0) / enrichedData.length;
-  
-  // Create a more varied trend pattern
-  const trendPattern = [-8, -10, 0, 3, 5]; 
-  
-  return years.map((year, index) => {
-    // Add more variation and natural curve
-    const variation = trendPattern[index] + (Math.random() * 4 - 2); 
-    const score = Math.max(50, Math.min(95, baseScore + variation));
-    
-    return {
-      year,
-      avgLiveability: parseFloat(score.toFixed(1)), 
-    };
-  });
-}, [enrichedData, data]);
+    if (!data || data.districts.length === 0) return [];
+    const years = [2020, 2021, 2022, 2023, 2024];
+    const baseScore = enrichedData.reduce((sum, d) => sum + d.liveabilityScore, 0) / enrichedData.length;
+
+    // Create a more varied trend pattern
+    const trendPattern = [-8, -10, 0, 3, 5];
+
+    return years.map((year, index) => {
+      // Add more variation and natural curve
+      const variation = trendPattern[index] + (Math.random() * 4 - 2);
+      const score = Math.max(50, Math.min(95, baseScore + variation));
+
+      return {
+        year,
+        avgLiveability: parseFloat(score.toFixed(1)),
+      };
+    });
+  }, [enrichedData, data]);
 
   const safeAvg = (nums: number[]) =>
-  nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : 0;
+    nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : 0;
 
-const getLeader = (rows: any[], key: string, mode: 'max' | 'min' = 'max') => {
-  if (!rows.length) return null;
-  const sorted = [...rows].sort((a, b) => (mode === 'max' ? b[key] - a[key] : a[key] - b[key]));
-  return sorted[0];
-};
+  const getLeader = (rows: any[], key: string, mode: 'max' | 'min' = 'max') => {
+    if (!rows.length) return null;
+    const sorted = [...rows].sort((a, b) => (mode === 'max' ? b[key] - a[key] : a[key] - b[key]));
+    return sorted[0];
+  };
 
 
-const groupBy = <T, K extends string | number>(arr: T[], keyFn: (x: T) => K) => {
-  const m = new Map<K, T[]>();
-  for (const item of arr) {
-    const k = keyFn(item);
-    if (!m.has(k)) m.set(k, []);
-    m.get(k)!.push(item);
-  }
-  return m;
-};
+  const groupBy = <T, K extends string | number>(arr: T[], keyFn: (x: T) => K) => {
+    const m = new Map<K, T[]>();
+    for (const item of arr) {
+      const k = keyFn(item);
+      if (!m.has(k)) m.set(k, []);
+      m.get(k)!.push(item);
+    }
+    return m;
+  };
 
-const buildHtmlReport = () => {
-  // IMPORTANT: use aggregatedDistricts (latest year per district)
-  const districts = aggregatedDistricts; // <-- FIX: unique districts only
-  const rankings = districts;            // already sorted desc
+  const buildHtmlReport = () => {
+    // IMPORTANT: use aggregatedDistricts (latest year per district)
+    const districts = aggregatedDistricts; // <-- FIX: unique districts only
+    const rankings = districts;            // already sorted desc
 
-  const avgLiveability = safeAvg(districts.map(d => d.liveabilityScore));
-  const top = rankings[0];
-  const bottom = rankings[rankings.length - 1];
-  const generatedAt = new Date().toLocaleString();
+    const avgLiveability = safeAvg(districts.map(d => d.liveabilityScore));
+    const top = rankings[0];
+    const bottom = rankings[rankings.length - 1];
+    const generatedAt = new Date().toLocaleString();
 
-  const bestAir = getLeader(districts, 'airQuality', 'max');
-  const bestMob = getLeader(districts, 'mobilityEfficiency', 'max');
-  const bestGreen = getLeader(districts, 'greenSpaceAccess', 'max');
-  const bestHealth = getLeader(districts, 'healthScore', 'max');
+    const bestAir = getLeader(districts, 'airQuality', 'max');
+    const bestMob = getLeader(districts, 'mobilityEfficiency', 'max');
+    const bestGreen = getLeader(districts, 'greenSpaceAccess', 'max');
+    const bestHealth = getLeader(districts, 'healthScore', 'max');
 
-  // ---- REAL temporal trend (avg liveability per year) ----
-  // This uses ALL rows (enrichedData) but averages by year.
-  const byYear = groupBy(enrichedData, (d) => d.year);
-  const temporal = temporalData.map(t => ({
-    year: t.year,
-    avgLiveability: Number(t.avgLiveability),
-  }));
+    // ---- REAL temporal trend (avg liveability per year) ----
+    // This uses ALL rows (enrichedData) but averages by year.
+    const byYear = groupBy(enrichedData, (d) => d.year);
+    const temporal = temporalData.map(t => ({
+      year: t.year,
+      avgLiveability: Number(t.avgLiveability),
+    }));
 
-  // ---- Data for charts (latest year per district) ----
-  const labels = districts.map(d => d.district);
+    // ---- Data for charts (latest year per district) ----
+    const labels = districts.map(d => d.district);
 
-  const liveabilitySeries = districts.map(d => d.liveabilityScore);
-  const airSeries = districts.map(d => d.airQuality);
-  const mobilitySeries = districts.map(d => d.mobilityEfficiency);
-  const greenSeries = districts.map(d => d.greenSpaceAccess);
-  const healthSeries = districts.map(d => d.healthScore);
+    const liveabilitySeries = districts.map(d => d.liveabilityScore);
+    const airSeries = districts.map(d => d.airQuality);
+    const mobilitySeries = districts.map(d => d.mobilityEfficiency);
+    const greenSeries = districts.map(d => d.greenSpaceAccess);
+    const healthSeries = districts.map(d => d.healthScore);
 
-  
-  const rowsHtml = rankings.map(
-    (d, i) => `
+
+    const rowsHtml = rankings.map(
+      (d, i) => `
       <tr>
         <td>${i + 1}</td>
         <td>${d.district}</td>
@@ -197,21 +197,21 @@ const buildHtmlReport = () => {
         <td>${d.healthScore}</td>
         <td>${Number(d.populationDensity).toLocaleString()}</td>
       </tr>`
-  ).join('');
+    ).join('');
 
-  
-  const payload = {
-    labels,
-    liveabilitySeries,
-    airSeries,
-    mobilitySeries,
-    greenSeries,
-    healthSeries,
-    temporalYears: temporal.map(t => t.year),
-    temporalAvg: temporal.map(t => t.avgLiveability),
-  };
 
-  return `<!doctype html>
+    const payload = {
+      labels,
+      liveabilitySeries,
+      airSeries,
+      mobilitySeries,
+      greenSeries,
+      healthSeries,
+      temporalYears: temporal.map(t => t.year),
+      temporalAvg: temporal.map(t => t.avgLiveability),
+    };
+
+    return `<!doctype html>
 <html>
 <head>
 <meta charset="utf-8" />
@@ -500,7 +500,7 @@ const buildHtmlReport = () => {
 
 </body>
 </html>`;
-};
+  };
 
 
   const downloadReport = () => {
@@ -517,14 +517,14 @@ const buildHtmlReport = () => {
   };
 
 
-    if (!data || data.districts.length === 0) {
-      return (
-        <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 p-12 text-center">
-          <AlertTriangle className="size-12 text-amber-400 mx-auto mb-4" />
-          <p className="text-slate-400">No data available. Please import data first.</p>
-        </div>
-      );
-    }
+  if (!data || data.districts.length === 0) {
+    return (
+      <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 p-12 text-center">
+        <AlertTriangle className="size-12 text-amber-400 mx-auto mb-4" />
+        <p className="text-slate-400">No data available. Please import data first.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -549,16 +549,16 @@ const buildHtmlReport = () => {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div className="relative overflow-hidden bg-gradient-to-br from-blue-500/20 to-blue-600/20 border border-blue-500/30 backdrop-blur-xl text-white rounded-2xl p-6 shadow-2xl">
-        <div className="absolute right-0 w-32 h-32 bg-blue-400/20 rounded-full blur-3xl" />
-        <TrendingUp className="size-8 mb-2 text-blue-400 relative z-10" />
-        <div className="relative overflow-hidden"> {/* center content vertically */}
-          <p className="text-blue-200 mb-1">Average Liveability</p>
-          <p className="text-3xl font-semibold">
-            {(enrichedData.reduce((sum, d) => sum + d.liveabilityScore, 0) / enrichedData.length).toFixed(1)}
-          </p>
+        <div className="relative overflow-hidden bg-gradient-to-br from-blue-500/20 to-blue-600/20 border border-blue-500/30 backdrop-blur-xl text-white rounded-2xl p-6 shadow-2xl">
+          <div className="absolute right-0 w-32 h-32 bg-blue-400/20 rounded-full blur-3xl" />
+          <TrendingUp className="size-8 mb-2 text-blue-400 relative z-10" />
+          <div className="relative overflow-hidden"> {/* center content vertically */}
+            <p className="text-blue-200 mb-1">Average Liveability</p>
+            <p className="text-3xl font-semibold">
+              {(enrichedData.reduce((sum, d) => sum + d.liveabilityScore, 0) / enrichedData.length).toFixed(1)}
+            </p>
+          </div>
         </div>
-      </div>
         <div className="relative overflow-hidden bg-gradient-to-br from-green-500/20 to-green-600/20 border border-green-500/30 backdrop-blur-xl text-white rounded-2xl p-6 shadow-2xl">
           <div className="absolute top-0 right-0 w-32 h-32 bg-green-400/20 rounded-full blur-3xl" />
           <Award className="size-8 mb-3 text-green-400 relative z-10" />
@@ -587,24 +587,37 @@ const buildHtmlReport = () => {
 
       {/* District Rankings */}
       <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 p-6">
-        <h3 className="text-white mb-4">District Rankings by Composite Liveability Score</h3>
+        <h3 className="text-white mb-4 ">District Rankings by Composite Liveability Score</h3>
         <ResponsiveContainer width="100%" height={400}>
           <BarChart data={aggregatedDistricts}>
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
             <XAxis dataKey="district" angle={-45} textAnchor="end" height={120} stroke="#94a3b8" />
             <YAxis domain={[0, 100]} stroke="#94a3b8" />
-            <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '0.5rem' }} />
-      
-            <Legend />
+            <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', color: 'white', borderRadius: '0.5rem' }} />
+
+            <Legend
+              wrapperStyle={{ paddingTop: 40 }}
+            />
             <Bar dataKey="liveabilityScore" fill="#3b82f6" name="Liveability Score" />
           </BarChart>
         </ResponsiveContainer>
       </div>
 
-     {/* Component Indicators */}
+      {/* Component Indicators */}
       <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 p-6">
         <h3 className="text-white mb-4">Component Indicators Comparison</h3>
 
+        {/* Dropdown to select indicator */}
+        <select
+          value={selectedIndicator || 'airQuality'}
+          onChange={(e) => setSelectedIndicator(e.target.value || null)}
+          className="mb-4 w-full md:w-auto px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-slate-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+        >
+          <option value="airQuality">Air Quality</option>
+          <option value="mobilityEfficiency">Mobility Efficiency</option>
+          <option value="greenSpaceAccess">Green Space</option>
+          <option value="healthScore">Health Score</option>
+        </select>
         {/* Dropdown to select indicator */}
         <select
           value={selectedIndicator || 'airQuality'}
@@ -622,9 +635,9 @@ const buildHtmlReport = () => {
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
             <XAxis dataKey="district" angle={-45} textAnchor="end" height={120} stroke="#94a3b8" />
             <YAxis domain={[0, 100]} stroke="#94a3b8" />
-            <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '0.5rem' }} />
+            <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', color: 'white', borderRadius: '0.5rem' }} />
             <Legend />
-            
+
             {/* Show only selected indicator */}
             {(!selectedIndicator || selectedIndicator === 'airQuality') && (
               <Bar dataKey="airQuality" fill="#10b981" name="Air Quality" />
@@ -644,69 +657,70 @@ const buildHtmlReport = () => {
 
       {/* Temporal Trend */}
       <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 p-6">
-                <h3 className="text-white mb-4">
-                  Temporal Liveability Trend (Normalized Longitudinal Analysis)
-                </h3>
-                <ResponsiveContainer width="100%" height={470}>
-                  <LineChart 
-                    data={temporalData}
-                    margin={{ top: 25, right: 30, left: 40, bottom: 35 }} /* Increased bottom from 25 to 35 *//* Added margin */
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-                    <XAxis 
-                dataKey="year" 
-                stroke="#94a3b8"
-                label={{ 
-                  value: 'Year', 
-                  position: 'outsideBottom', 
-                  offset: 30, 
-                  fill: '#94a3b8',
-                  dy: 30,
-                  dx: -20
-                }}
-                />
-                      <YAxis 
-                  domain={['dataMin - 5', 'dataMax + 5']}
-                  stroke="#94a3b8"
-                  label={{ 
-                    value: 'Liveability Index Score', 
-                    angle: -90, 
-                    position: 'center',
-                    dx: -20,
-                    fill: '#94a3b8'
-                  }}
-                />
+        <h3 className="text-white mb-4">
+          Temporal Liveability Trend (Normalized Longitudinal Analysis)
+        </h3>
+        <ResponsiveContainer width="100%" height={470}>
+          <LineChart
+            data={temporalData}
+            margin={{ top: 25, right: 30, left: 40, bottom: 35 }} /* Increased bottom from 25 to 35 *//* Added margin */
+          >
+            <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+            <XAxis
+              dataKey="year"
+              stroke="#94a3b8"
+              label={{
+                value: 'Year',
+                position: 'outsideBottom',
+                offset: 30,
+                fill: '#94a3b8',
+                dy: 30,
+                dx: -20
+              }}
+            />
+            <YAxis
+              domain={['dataMin - 5', 'dataMax + 5']}
+              stroke="#94a3b8"
+              label={{
+                value: 'Liveability Index Score',
+                angle: -90,
+                position: 'center',
+                dx: -20,
+                fill: '#94a3b8'
+              }}
+            />
 
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#1e293b', 
-                      border: '1px solid #334155', 
-                      borderRadius: '0.5rem' 
-                    }} 
-                    formatter={(value) => [`${value.toFixed(1)}`, 'Score']}
-                    labelFormatter={(label) => `Year: ${label}`}
-                  />
-                  <Legend
-                    wrapperStyle={{ paddingTop: 40 }} />
-                  <Line
-                  wrapperStyle={{ 
-                
+            <Tooltip
+              contentStyle={{
+                backgroundColor: '#1e293b',
+                border: '1px solid #334155',
+                color: 'white',
+                borderRadius: '0.5rem'
+              }}
+              formatter={(value) => [`${value.toFixed(1)}`, 'Score']}
+              labelFormatter={(label) => `Year: ${label}`}
+            />
+            <Legend
+              wrapperStyle={{ paddingTop: 40 }} />
+            <Line
+              wrapperStyle={{
+
                 color: "#94a3b8",
                 fontSize: "14px"
               }}
               type="monotone"
               dataKey="avgLiveability"
               stroke="#8b5cf6"
-              strokeWidth={4} 
+              strokeWidth={4}
               name="Average Liveability"
-              dot={{ 
-                r: 6, 
+              dot={{
+                r: 6,
                 fill: "#8b5cf6",
                 strokeWidth: 2,
                 stroke: "#ffffff"
               }}
-              activeDot={{ 
-                r: 10, 
+              activeDot={{
+                r: 10,
                 fill: "#ffffff",
                 stroke: "#8b5cf6",
                 strokeWidth: 3
@@ -738,39 +752,40 @@ const buildHtmlReport = () => {
             <div>
               <h4 className="text-white mb-4">Performance Radar</h4>
               <ResponsiveContainer width="100%" height={300}>
-              <RadarChart data={radarData}>
-                <PolarGrid stroke="#334155" />
-                <PolarAngleAxis dataKey="indicator" stroke="#94a3b8" />
-                <PolarRadiusAxis 
-                  domain={[0, 100]} 
-                  tick={false}
-                  axisLine={false}
-                  tickCount={6}
-                />
-                <Radar
-                  name={selectedDistrictData?.district || 'District'}
-                  dataKey="value"
-                  stroke="#3b82f6"
-                  fill="#3b82f6"
-                  fillOpacity={0.6}
-                  strokeWidth={2}
-                  dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }}
-                  connectNulls={false} // Set to false to better handle missing data
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1e293b', 
-                    border: '1px solid #334155', 
-                    borderRadius: '0.5rem' 
-                  }} 
-                />
-                <Legend 
-                  verticalAlign="bottom"
-                  align="center"
-                  wrapperStyle={{ marginTop: 20 }} 
-                />
-              </RadarChart>
-            </ResponsiveContainer>
+                <RadarChart data={radarData}>
+                  <PolarGrid stroke="#334155" />
+                  <PolarAngleAxis dataKey="indicator" stroke="#94a3b8" />
+                  <PolarRadiusAxis
+                    domain={[0, 100]}
+                    tick={false}
+                    axisLine={false}
+                    tickCount={6}
+                  />
+                  <Radar
+                    name={selectedDistrictData?.district || 'District'}
+                    dataKey="value"
+                    stroke="#3b82f6"
+                    fill="#3b82f6"
+                    fillOpacity={0.6}
+                    strokeWidth={2}
+                    dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }}
+                    connectNulls={false} // Set to false to better handle missing data
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#1e293b',
+                      border: '1px solid #334155',
+                      color: 'white',
+                      borderRadius: '0.5rem'
+                    }}
+                  />
+                  <Legend
+                    verticalAlign="bottom"
+                    align="center"
+                    wrapperStyle={{ marginTop: 20 }}
+                  />
+                </RadarChart>
+              </ResponsiveContainer>
             </div>
             <div>
               <h4 className="text-white mb-4">Key Metrics</h4>
@@ -832,12 +847,12 @@ const buildHtmlReport = () => {
                   <td className="py-3 px-4">
                     <span
                       className={`inline-flex items-center justify-center size-6 rounded-full ${index === 0
-                          ? 'bg-yellow-400 text-yellow-900'
-                          : index === 1
-                            ? 'bg-slate-300 text-slate-900'
-                            : index === 2
-                              ? 'bg-orange-400 text-orange-900'
-                              : 'bg-slate-700 text-slate-200'
+                        ? 'bg-yellow-400 text-yellow-900'
+                        : index === 1
+                          ? 'bg-slate-300 text-slate-900'
+                          : index === 2
+                            ? 'bg-orange-400 text-orange-900'
+                            : 'bg-slate-700 text-slate-200'
                         }`}
                     >
                       {index + 1}

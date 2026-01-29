@@ -173,9 +173,12 @@ export function Chatbot({ data }: ChatbotProps) {
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map(msg => (
           <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${msg.sender === 'user' ? 'bg-purple-600 text-white rounded-br-none' : 'bg-slate-700 text-slate-100 rounded-bl-none'}`}>
+            <div className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${msg.sender === 'user'
+                ? 'bg-purple-600 text-white rounded-br-none'
+                : 'bg-slate-700 text-white rounded-bl-none'
+              }`}>
               <p className="text-sm whitespace-pre-wrap">{msg.text}</p>
-              <span className="text-xs opacity-70 mt-1 block">
+              <span className="text-xs text-slate-300 opacity-80 mt-1 block">
                 {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
@@ -183,7 +186,7 @@ export function Chatbot({ data }: ChatbotProps) {
         ))}
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-slate-700 text-slate-100 px-4 py-3 rounded-lg rounded-bl-none flex items-center gap-2">
+            <div className="bg-slate-700 text-white px-4 py-3 rounded-lg rounded-bl-none flex items-center gap-2">
               <Loader className="size-4 animate-spin" />
               <span className="text-sm">Thinking...</span>
             </div>
@@ -193,14 +196,14 @@ export function Chatbot({ data }: ChatbotProps) {
       </div>
 
       {/* Input Area */}
-      <div className="border-t border-slate-700 p-4 bg-slate-900/50">
-        <div className="flex gap-3">
+      <div className="border-t border-slate-700 p-4 bg-slate-900/50 w-full">
+        <div className="flex gap-3 w-full">
           <textarea
             value={inputValue}
             onChange={e => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Ask me about your urban data, policies, or recommendations..."
-            className="flex-1 bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none max-h-24"
+            className="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white placeholder-slate-200 focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
             rows={1}
             disabled={isLoading}
           />
@@ -212,8 +215,9 @@ export function Chatbot({ data }: ChatbotProps) {
             {isLoading ? <Loader className="size-5 animate-spin" /> : <Send className="size-5" />}
           </button>
         </div>
-        <p className="text-xs text-slate-400 mt-2">Press Enter to send, Shift+Enter for new line</p>
+        <p className="text-xs text-slate-300 mt-2">Press Enter to send, Shift+Enter for new line</p>
       </div>
+
     </div>
   );
 }

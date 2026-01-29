@@ -10,25 +10,25 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
     {
       icon: TrendingUp,
       title: 'Liveability Analytics',
-      description: 'ML-weighted composite scores with PCA-inspired feature engineering and temporal analysis',
+      description: 'ML-based composite liveability scores with temporal analysis',
       color: 'from-blue-500 to-cyan-500',
     },
     {
       icon: MapPin,
       title: 'Environmental Risk Mapping',
-      description: 'Geospatial hotspot detection with vulnerability overlays and district-level risk scoring',
+      description: 'Interactive geospatial risk maps with district-level overlays',
       color: 'from-red-500 to-orange-500',
     },
     {
       icon: GitBranch,
       title: 'Policy Simulation',
-      description: 'Statistical forecasting and system dynamics models for impact assessment',
+      description: 'Scenario modeling and policy impact simulations',
       color: 'from-green-500 to-emerald-500',
     },
     {
       icon: Sparkles,
       title: 'AI Decision Layer',
-      description: 'Autonomous policy optimization using reinforcement learning and Bayesian methods',
+      description: 'AI-assisted policy recommendations for optimized outcomes',
       color: 'from-purple-500 to-pink-500',
     },
   ];
@@ -36,8 +36,8 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
   const capabilities = [
     'Machine learning-based index weighting',
     'District-level heatmaps and rankings',
-    'Multi-objective optimization',
-    'Pareto-optimal solution identification',
+    'Optimization of key urban metrics',
+    'Evaluation of multiple policy outcomes',
     'Before/after policy comparisons',
     'Real-time scenario modeling',
   ];
@@ -46,7 +46,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white overflow-hidden">
       {/* Animated background */}
       <div className="fixed inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)] opacity-20" />
-      
+
       {/* Gradient orbs */}
       <div className="fixed top-0 left-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl animate-pulse" />
       <div className="fixed bottom-0 right-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl animate-pulse delay-1000" />
@@ -66,8 +66,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
           </h1>
 
           <p className="text-xl md:text-2xl text-slate-400 mb-12 max-w-3xl mx-auto animate-fade-in delay-200">
-            Quantify, compare, and optimize urban liveability across space and time using
-            advanced ML models and geospatial analytics
+            Quantify, compare, and optimize urban liveability across space and time using advanced ML models and geospatial analytics
           </p>
 
           {/* CTA Buttons */}
@@ -82,28 +81,6 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
                 <ArrowRight className="size-5 group-hover:translate-x-1 transition-transform" />
               </span>
             </button>
-            
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-20 max-w-4xl mx-auto">
-            {[
-              { label: 'Data Points', value: '100K+' },
-              { label: 'ML Models', value: '12+' },
-              { label: 'Indicators', value: '25+' },
-              { label: 'Simulations/min', value: '500+' },
-            ].map((stat, i) => (
-              <div
-                key={stat.label}
-                className="p-6 bg-slate-800/30 backdrop-blur-xl border border-slate-700/50 rounded-xl animate-fade-in"
-                style={{ animationDelay: `${400 + i * 100}ms` }}
-              >
-                <div className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent mb-2">
-                  {stat.value}
-                </div>
-                <div className="text-slate-400">{stat.label}</div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
@@ -121,7 +98,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
           </div>
 
           <div className="grid md:grid-cols-2 gap-6">
-            {features.map((feature, index) => {
+            {features.map((feature) => {
               const Icon = feature.icon;
               return (
                 <div
@@ -131,7 +108,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
                   <div className="absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-10 rounded-2xl transition-opacity"
                     style={{ backgroundImage: `linear-gradient(to bottom right, var(--tw-gradient-stops))` }}
                   />
-                  
+
                   <div className="relative">
                     <div className={`inline-flex p-4 bg-gradient-to-br ${feature.color} rounded-xl mb-4`}>
                       <Icon className="size-8 text-white" />
@@ -155,7 +132,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
                 Advanced Capabilities
               </h2>
               <p className="text-xl text-slate-400 mb-8">
-                Leveraging cutting-edge machine learning and optimization techniques for urban planning excellence
+                Leveraging machine learning and optimization techniques for urban planning insights
               </p>
               <div className="space-y-4">
                 {capabilities.map((capability) => (
@@ -175,7 +152,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
                     <Database className="size-8 text-purple-400" />
                     <div>
                       <div className="text-white">Excel Data Import</div>
-                      <div className="text-slate-400">Supports .xlsx and .xls formats</div>
+                      <div className="text-slate-400">Supports .xlsx files</div>
                     </div>
                   </div>
                   <div className="h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent" />
@@ -191,7 +168,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
                     <Zap className="size-8 text-yellow-400" />
                     <div>
                       <div className="text-white">Instant Simulation</div>
-                      <div className="text-slate-400">Policy impact in milliseconds</div>
+                      <div className="text-slate-400">Fast policy impact simulations</div>
                     </div>
                   </div>
                 </div>
