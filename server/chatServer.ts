@@ -11,7 +11,7 @@ app.use(express.json());
 // Proxy endpoint for Ollama API with fallback to smaller models
 app.post('/api/chat', async (req, res) => {
   try {
-    let { prompt, model = 'mistral' } = req.body;
+    let { prompt, model = 'tinyllama' } = req.body;
 
     if (!prompt) {
       return res.status(400).json({ error: 'Prompt is required' });

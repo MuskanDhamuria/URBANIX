@@ -66,7 +66,7 @@ export function Chatbot({ data }: ChatbotProps) {
         context = '\n\nNote: User has not yet imported urban data.';
       }
 
-      const preferredModels = ['mistral', 'orca-mini']; // Only models you have installed
+      const preferredModels = ['tinyllama', 'orca-mini']; // Only models you have installed
       let lastErr: Error | null = null;
 
       // Use relative /api path for all environments (Vite proxy handles forwarding)
