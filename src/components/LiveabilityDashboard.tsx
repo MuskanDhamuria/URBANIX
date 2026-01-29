@@ -618,17 +618,6 @@ export function LiveabilityDashboard({ data }: LiveabilityDashboardProps) {
           <option value="greenSpaceAccess">Green Space</option>
           <option value="healthScore">Health Score</option>
         </select>
-        {/* Dropdown to select indicator */}
-        <select
-          value={selectedIndicator || 'airQuality'}
-          onChange={(e) => setSelectedIndicator(e.target.value || null)}
-          className="mb-4 w-full md:w-auto px-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-slate-200 focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-        >
-          <option value="airQuality">Air Quality</option>
-          <option value="mobilityEfficiency">Mobility Efficiency</option>
-          <option value="greenSpaceAccess">Green Space</option>
-          <option value="healthScore">Health Score</option>
-        </select>
 
         <ResponsiveContainer width="100%" height={400}>
           <BarChart data={aggregatedDistricts}>
