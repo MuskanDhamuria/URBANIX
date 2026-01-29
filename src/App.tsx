@@ -52,26 +52,38 @@ export default function App() {
       <header className="relative bg-slate-900/80 backdrop-blur-xl border-b border-slate-800/50 shadow-2xl">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <div
+              role="link"
+              tabIndex={0}
+              onClick={() => {
+                setShowLanding(true);
+                setActiveTab('import'); // optional
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  setShowLanding(true);
+                  setActiveTab('import');
+                }
+              }}
+              className="flex items-center gap-3 cursor-pointer group"
+            >
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg blur-lg opacity-50" />
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg blur-lg opacity-50 group-hover:opacity-70 transition" />
                 <div className="relative bg-gradient-to-r from-purple-600 to-blue-600 p-2 rounded-lg">
                   <Sparkles className="size-6 text-white" />
                 </div>
               </div>
+
               <div>
-                <h1 className="text-white">URBANIX.</h1>
-                <p className="text-slate-400 mt-1">
+                <h1 className="text-white group-hover:text-purple-400 transition">
+                  URBANIX.
+                </h1>
+                <p className="text-slate-400 mt-1 group-hover:text-slate-300 transition">
                   AI-powered urban planning insights
                 </p>
               </div>
             </div>
-            <button
-              onClick={() => setShowLanding(true)}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700 transition-colors"
-            >
-              Home
-            </button>
+
           </div>
         </div>
       </header>
