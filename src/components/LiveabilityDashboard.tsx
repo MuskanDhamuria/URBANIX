@@ -594,7 +594,7 @@ export function LiveabilityDashboard({ data }: LiveabilityDashboardProps) {
             <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', color: 'white', borderRadius: '0.5rem' }} />
 
             <Legend
-              wrapperStyle={{ paddingTop: 40 }}
+              wrapperStyle={{ paddingTop: 0 }}
             />
             <Bar dataKey="liveabilityScore" fill="#3b82f6" name="Liveability Score" />
           </BarChart>
