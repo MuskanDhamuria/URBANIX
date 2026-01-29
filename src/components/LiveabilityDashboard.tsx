@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, LineChart, Line } from 'recharts';
 import { TrendingUp, Award, AlertTriangle, Download } from 'lucide-react';
 import { UrbanData } from '../App';
-import urbanixLogo from '../assets/urbanix.png';
 
 
 type LiveabilityDashboardProps = {
@@ -271,7 +270,6 @@ export function LiveabilityDashboard({ data }: LiveabilityDashboardProps) {
 
 <body>
   <div class="topbar">
-    <img src="urbanix.png" class="logo" />
     <div>
       <h1>Liveability Analytics Report</h1>
       <div class="muted">Generated: ${generatedAt}</div>
