@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState , useEffect } from 'react';
+
 import {
   BarChart,
   Bar,
@@ -22,6 +23,20 @@ type RiskMappingProps = {
 
 export function RiskMapping({ data }: RiskMappingProps) {
   const [selectedRiskLayer, setSelectedRiskLayer] = useState<string>('composite');
+  const [isMobile, setIsMobile] = useState(false);
+
+useEffect(() => {
+  const mq = window.matchMedia('(max-width: 640px)'); // Tailwind "sm"
+  const update = () => setIsMobile(mq.matches);
+  update();
+  mq.addEventListener('change', update);
+  return () => mq.removeEventListener('change', update);
+}, []);
+
+  const chartHeight = isMobile ? 360 : 520;
+
+  
+
 
   const calculateRiskScore = (district: any) => {
     const heatRisk = (district.heatIslandIntensity || 0) * 20;
@@ -215,7 +230,8 @@ const getLeftBorderColor = (score: number) => getRiskColor(score);
 
       <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 p-6">
         <h3 className="text-white mb-4">Risk Layer Visualization</h3>
-        <div className="flex gap-3 mb-6 flex-wrap">
+         <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-3 mb-6">
+
           {[
             { id: 'composite', label: 'Composite Risk', icon: Shield },
             { id: 'heat', label: 'Heat Island', icon: Flame },
@@ -241,7 +257,8 @@ const getLeftBorderColor = (score: number) => getRiskColor(score);
         </div>
     <div className="relative">
 <div className="relative w-full">
-  <ResponsiveContainer width="100%" height={520}>
+  <ResponsiveContainer width="100%" height={chartHeight}>
+
     <BarChart
       data={sortedByRisk}
       margin={{ top: 24, right: 24, left: 0, bottom: 60 }}
@@ -250,12 +267,15 @@ const getLeftBorderColor = (score: number) => getRiskColor(score);
 
       <XAxis
         dataKey="district"
-        angle={-45}
+        interval={isMobile ? 1 : 0}
+        angle={isMobile ? -25 : -45}
         textAnchor="end"
-        height={70}
+        height={isMobile ? 50 : 70}
         tickMargin={10}
         stroke="#94a3b8"
+        tick={{ fontSize: isMobile ? 10 : 12 }}
       />
+
       
 
       <YAxis stroke="#94a3b8" domain={[ 0, (dataMax: number) => Math.ceil(dataMax/50)*50, ]}/>
@@ -333,7 +353,8 @@ const getLeftBorderColor = (score: number) => getRiskColor(score);
 
       <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 p-6">
         <h3 className="text-white mb-4">Vulnerability Assessment (Risk × Population Exposure)</h3>
-        <ResponsiveContainer width="100%" height={650}>
+        <ResponsiveContainer width="100%" height={chartHeight}>
+
           <ScatterChart margin={{bottom: 30 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
 
@@ -342,12 +363,7 @@ const getLeftBorderColor = (score: number) => getRiskColor(score);
               dataKey="riskScore"
               domain={[0, maxRiskScore]}
               stroke="#94a3b8"
-              label={{
-                value: 'Environmental Risk Score (0 - 1000)',
-                position: 'insideBottom',
-                offset: -25,
-                fill: '#94a3b8',
-              }}
+              tick={{ fontSize: isMobile ? 10 : 12 }}
             />
 
             <YAxis
@@ -382,6 +398,9 @@ const getLeftBorderColor = (score: number) => getRiskColor(score);
             </Scatter>
           </ScatterChart>
         </ResponsiveContainer>
+        <p className="text-slate-500 text-sm text-center mt-2">
+          Environmental Risk Score (0 – {maxRiskScore})
+        </p>
 
         <p className="text-slate-400 mt-4 text-center">
           Bubble size represents vulnerability score (risk exposure × population density)
