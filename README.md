@@ -1,17 +1,53 @@
+# URBANIX
 
-  # URBANIX
+An urban planning and liveability analysis platform with AI-powered decision support.
 
-  ## Running the code
+## Getting Started
 
-  Run `npm i` to install the dependencies.
+### Prerequisites
+- Node.js (v16 or higher)
+- Ollama (for local AI model support)
 
-  Run curl https://ollama.ai/install.sh | sh
+### Installation
 
-  Run ollama pull tinyllama
+1. Install dependencies:
+```bash
+npm i
+```
 
-  Run ollama serve
+2. Set up Ollama:
+```bash
+curl https://ollama.ai/install.sh | sh
+ollama pull tinyllama
+```
 
-  Run npm run server
+3. Start the Ollama server:
+```bash
+ollama serve
+```
 
-  Run `npm run dev` to start the development server.
+4. In another terminal, start the backend server:
+```bash
+npm run server
+```
 
+5. In another terminal, start the development server:
+```bash
+npm run dev
+```
+
+## Features
+
+- Liveability Dashboard
+- AI Decision Layer
+- Policy Simulation
+- Risk Mapping
+- Data Import
+- Interactive Chatbot
+
+## Contributors
+Team Myrm: 
+Muskan Dhamuria - Developer, Cybersecurity VP
+Tan Mei Yu - Developer, HR VP
+Raye Yap - Developer, Product VP
+Lou Yun Ling - Developer, President 
