@@ -97,7 +97,7 @@ useEffect(() => {
 
   const getRiskLevel = (score: number) => {
     const s = maxRiskScore || 1000;
-    if (score >= 0.6 * s) return 'Critical';
+    if (score >= 0.7 * s) return 'Critical';
     if (score >= 0.5 * s) return 'High';
     if (score >= 0.3 * s) return 'Moderate';
     return 'Low';
@@ -230,8 +230,7 @@ const getLeftBorderColor = (score: number) => getRiskColor(score);
 
       <div className="bg-slate-800/50 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-700/50 p-6">
         <h3 className="text-white mb-4">Risk Layer Visualization</h3>
-         <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-3 mb-6">
-
+        <div className="flex flex-col sm:flex-row sm:flex-nowrap gap-3 mb-6">
           {[
             { id: 'composite', label: 'Composite Risk', icon: Shield },
             { id: 'heat', label: 'Heat Island', icon: Flame },
@@ -243,7 +242,7 @@ const getLeftBorderColor = (score: number) => getRiskColor(score);
               <button
                 key={layer.id}
                 onClick={() => setSelectedRiskLayer(layer.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
+                className={`w-full sm:w-auto flex items-center gap-2 px-4 py-2 rounded-lg border transition-all ${
                   selectedRiskLayer === layer.id
                     ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white border-transparent shadow-lg shadow-purple-500/50'
                     : 'bg-slate-900/50 text-slate-300 border-slate-700 hover:border-slate-600'
@@ -255,6 +254,7 @@ const getLeftBorderColor = (score: number) => getRiskColor(score);
             );
           })}
         </div>
+
     <div className="relative">
 <div className="relative w-full">
   <ResponsiveContainer width="100%" height={chartHeight}>
