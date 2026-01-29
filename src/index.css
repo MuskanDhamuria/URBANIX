@@ -2832,3 +2832,25 @@ html {
     opacity: .5;
   }
 }
+
+/* Navbar */
+.nav-scrollbar::-webkit-scrollbar {
+  height: 6px;
+}
+
+.nav-scrollbar::-webkit-scrollbar-track {
+  background: rgba(30, 41, 59, 0.6); 
+  border-radius: 999px;
+}
+
+.nav-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.35); 
+}
+
+.nav-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.6);
+}
+
+.nav-scrollbar {
+  scrollbar-color: rgba(148, 163, 184, 0.5) rgba(30, 41, 59, 0.6);
+}

@@ -91,7 +91,7 @@ export default function App() {
       {/* Navigation Tabs */}
       <nav className="relative bg-slate-900/60 backdrop-blur-xl border-b border-slate-800/50">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="flex gap-1 overflow-x-auto">
+          <div className="flex gap-1 overflow-x-auto nav-scrollbar pb-3">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
